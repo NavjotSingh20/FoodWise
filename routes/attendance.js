@@ -1,17 +1,10 @@
-// ============================================================
-// routes/attendance.js
-// Routes for recording student attendance per meal
-// ============================================================
-
 const express = require('express');
 const router  = express.Router();
 const db      = require('../db/connection');
 
-// ============================================================
 // POST /attendance
 // Record attendance for a meal
 // Body: { students_present: 120, meal_id: 1 }
-// ============================================================
 router.post('/', async (req, res) => {
     try {
         const { students_present, meal_id } = req.body;
@@ -43,11 +36,9 @@ router.post('/', async (req, res) => {
     }
 });
 
-// ============================================================
 // GET /attendance
 // Get all attendance records with meal info
 // Example of GROUP BY: average attendance per meal type
-// ============================================================
 router.get('/', async (req, res) => {
     try {
         const sql = `
@@ -67,11 +58,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// ============================================================
 // GET /attendance/avg
 // GROUP BY query: average students per meal type
-// This is a great DBMS concept to showcase!
-// ============================================================
 router.get('/avg', async (req, res) => {
     try {
         const sql = `
