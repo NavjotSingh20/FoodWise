@@ -1,10 +1,10 @@
-# 🍱 FoodWise — Hostel Food Wastage Analytics & Demand Prediction System
+# FoodWise — Hostel Food Wastage Analytics & Demand Prediction System
 
 A full-stack DBMS project built with **Node.js (Express)**, **MySQL**, and **vanilla HTML/CSS/JS**.
 
 ---
 
-## 📌 What This Project Does
+## What This Project Does
 
 FoodWise helps hostel food managers:
 - **Track** meals, attendance, food prepared, and food consumed
@@ -15,7 +15,7 @@ FoodWise helps hostel food managers:
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 foodwise/
@@ -41,7 +41,7 @@ foodwise/
 
 ---
 
-## 🛠️ Setup & Run Instructions
+## Setup & Run Instructions
 
 ### Step 1: Install Prerequisites
 - Install [Node.js](https://nodejs.org) (v16 or higher)
@@ -85,9 +85,9 @@ node server.js
 ```
 You should see:
 ```
-✅ Connected to MySQL database: foodwise_db
-🍱 FoodWise Server Started!
-📡 Running at: http://localhost:3000
+Succesfully connected to MySQL database: foodwise_db
+FoodWise Server Started!
+Running at: http://localhost:3000
 ```
 
 ### Step 6: Open the App
@@ -95,7 +95,7 @@ Visit: **http://localhost:3000**
 
 ---
 
-## 🌐 API Endpoints (REST API)
+## API Endpoints (REST API)
 
 | Method | URL                    | Description                        |
 |--------|------------------------|------------------------------------|
@@ -114,7 +114,7 @@ Visit: **http://localhost:3000**
 
 ---
 
-## 🗃️ Database Design
+## Database Design
 
 ### Tables
 ```
@@ -140,7 +140,7 @@ Prediction      → prediction_id (PK), prediction_date, meal_type, ...
 
 ---
 
-## 📊 Sample SQL Queries
+## Sample SQL Queries
 
 ### 1. Wastage Calculation (JOIN 5 tables)
 ```sql
@@ -174,7 +174,7 @@ SELECT GetAvgWastePerStudent();
 
 ---
 
-## 🧪 Testing with Sample Data
+## Testing with Sample Data
 
 After running `schema.sql`, sample data is already inserted. You can:
 
@@ -185,7 +185,7 @@ After running `schema.sql`, sample data is already inserted. You can:
 
 ---
 
-## 🔧 Tech Stack
+## Tech Stack
 
 - **Backend:** Node.js, Express.js
 - **Database:** MySQL 8.0
@@ -194,22 +194,22 @@ After running `schema.sql`, sample data is already inserted. You can:
 
 ---
 
-## 📚 DBMS Concepts Demonstrated
+## DBMS Concepts Demonstrated
 
-1. ✅ Entity-Relationship Design (6 normalized tables)
-2. ✅ Primary Keys & Foreign Keys
-3. ✅ Referential Integrity (ON DELETE CASCADE)
-4. ✅ TRIGGER (automatic wastage calculation)
-5. ✅ Stored Procedure (parameterized report)
-6. ✅ Stored Function (scalar return)
-7. ✅ Multi-table JOINs (LEFT JOIN, INNER JOIN)
-8. ✅ GROUP BY with aggregate functions
-9. ✅ COALESCE for NULL handling
-10. ✅ CASE WHEN conditional logic
-11. ✅ REST API design
-12. ✅ CRUD operations
+1. Entity-Relationship Design (6 normalized tables)
+2. Primary Keys & Foreign Keys
+3. Referential Integrity (ON DELETE CASCADE)
+4. TRIGGER (automatic wastage calculation)
+5. Stored Procedure (parameterized report)
+6. Stored Function (scalar return)
+7. Multi-table JOINs (LEFT JOIN, INNER JOIN)
+8. GROUP BY with aggregate functions
+9. COALESCE for NULL handling
+10. CASE WHEN conditional logic
+11. REST API design
+12. CRUD operations
 
 ---
 
-## 👨‍💻 Author
-Built as a DBMS mini-project. Feel free to modify and extend!
+## Author
+Navjot Singh, Shaina Gera, Moksh
