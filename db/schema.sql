@@ -1,15 +1,8 @@
--- ============================================================
--- FoodWise FINAL CLEAN SCHEMA (FIXED)
--- ============================================================
-
 DROP DATABASE IF EXISTS foodwise_db;
 CREATE DATABASE foodwise_db;
 USE foodwise_db;
 
--- ======================
 -- TABLES
--- ======================
-
 CREATE TABLE Meal (
     meal_id    INT AUTO_INCREMENT PRIMARY KEY,
     meal_date  DATE NOT NULL,
@@ -47,10 +40,8 @@ CREATE TABLE Wastage_Log (
     FOREIGN KEY (meal_id) REFERENCES Meal(meal_id) ON DELETE CASCADE
 );
 
--- ======================
--- TRIGGER (ONLY ONE)
--- ======================
 
+-- Triggers
 DELIMITER $$
 
 CREATE TRIGGER trg_calculate_wastage
@@ -75,11 +66,6 @@ END$$
 
 DELIMITER ;
 
--- ======================
--- VIEWS (ONLY ONE SET)
--- ======================
-
--- 🔹 Dashboard main table
 CREATE VIEW vw_meal_summary AS
 SELECT 
     m.meal_id,
@@ -100,7 +86,7 @@ LEFT JOIN Food_Prepared fp ON m.meal_id = fp.meal_id
 LEFT JOIN Food_Consumed fc ON m.meal_id = fc.meal_id
 LEFT JOIN Wastage_Log wl ON m.meal_id = wl.meal_id;
 
--- 🔹 Wastage summary
+-- Wastage summary
 CREATE VIEW vw_wastage_by_type AS
 SELECT 
     m.meal_type,
@@ -111,7 +97,7 @@ FROM Meal m
 LEFT JOIN Wastage_Log w ON m.meal_id = w.meal_id
 GROUP BY m.meal_type;
 
--- 🔹 Trend chart
+-- Trend chart
 CREATE VIEW vw_daily_trend AS
 SELECT 
     m.meal_date,
@@ -121,10 +107,7 @@ LEFT JOIN Wastage_Log w ON m.meal_id = w.meal_id
 GROUP BY m.meal_date
 ORDER BY m.meal_date DESC;
 
--- ======================
--- SAMPLE DATA (OPTIONAL)
--- ======================
-
+-- SAMPLE DATA (For Testing and Demonstration)
 INSERT INTO Meal (meal_date, meal_type) VALUES
 ('2024-06-10','Breakfast'),
 ('2024-06-10','Lunch'),
