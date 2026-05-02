@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FoodWise — Hostel Food Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--bg2:#111318;--panel:#15181f;--card:#1c1f28;--card2:#21252f;
+  --line:rgba(255,255,255,0.07);--line2:rgba(255,255,255,0.12);
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.12);--green-glow:rgba(34,197,94,0.25);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,0.12);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.12);
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.12);
+  --violet:#8b5cf6;--violet-dim:rgba(139,92,246,0.12);
+  --tx:#f0f2f7;--tx2:#9299aa;--tx3:#565e72;
+  --accent:#22c55e;--sidebar-w:240px;--top-h:60px;--r:10px;--r-lg:16px;--r-xl:20px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:200}
+.brand-wrap{padding:26px 20px 20px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.brand-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#1a5c32,#22c55e);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(34,197,94,0.3);flex-shrink:0}
+.brand-icon svg{width:16px;height:16px;fill:#fff}
+.brand-name{font-family:'DM Serif Display',serif;font-size:19px;color:var(--tx);letter-spacing:-0.3px}
+.brand-sub{font-size:11px;color:var(--tx3);padding-left:44px;margin-top:-1px}
+.nav{flex:1;padding:16px 10px;overflow-y:auto}
+.nav-label{font-size:10px;font-weight:600;color:var(--tx3);letter-spacing:1.2px;text-transform:uppercase;padding:0 10px;margin:14px 0 5px}
+.nav-label:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;color:var(--tx2);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:400;padding:8px 10px;border-radius:var(--r);cursor:pointer;transition:all 0.15s;text-align:left;margin-bottom:1px;letter-spacing:0.1px}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:var(--tx)}
+.nav-item.on{background:var(--green-dim);color:var(--green);font-weight:500}
+.nav-item.on .ni{background:rgba(34,197,94,0.15)}
+.ni{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s}
+.ni svg{width:13px;height:13px;fill:currentColor}
+.sidebar-foot{padding:14px 20px;border-top:1px solid var(--line)}
+.sidebar-foot span{font-size:11px;color:var(--tx3)}
+.main{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:var(--top-h);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 32px;position:sticky;top:0;z-index:100;background:rgba(13,15,20,0.85);backdrop-filter:blur(14px)}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.btn-ham{display:none;background:none;border:1px solid var(--line2);border-radius:7px;padding:7px;cursor:pointer;color:var(--tx2)}
+.page-title{font-size:15px;font-weight:500;color:var(--tx)}
+.page-crumb{font-size:12px;color:var(--tx3)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 13px;font-size:11.5px;color:var(--tx2)}
+.content{padding:28px 32px 56px;flex:1}
+.panel{display:none}.panel.on{display:block;animation:up 0.24s cubic-bezier(.16,1,.3,1)}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);padding:20px 22px 18px;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s}
+.kpi:hover{transform:translateY(-2px);border-color:var(--line2)}
+.kpi-label{font-size:11px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px}
+.kpi-val{font-family:'DM Serif Display',serif;font-size:34px;color:var(--tx);line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:11.5px;color:var(--tx3)}
+.kpi-icon{position:absolute;top:18px;right:18px;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.kpi-icon svg{width:15px;height:15px;fill:currentColor}
+.ki-g{background:var(--green-dim);color:var(--green)}.ki-r{background:var(--red-dim);color:var(--red)}.ki-a{background:var(--amber-dim);color:var(--amber)}.ki-b{background:var(--blue-dim);color:var(--blue)}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;border-radius:0 0 var(--r-xl) var(--r-xl)}
+.kpi:nth-child(1)::after{background:linear-gradient(90deg,var(--green),rgba(34,197,94,0))}
+.kpi:nth-child(2)::after{background:linear-gradient(90deg,var(--red),rgba(239,68,68,0))}
+.kpi:nth-child(3)::after{background:linear-gradient(90deg,var(--amber),rgba(245,158,11,0))}
+.kpi:nth-child(4)::after{background:linear-gradient(90deg,var(--blue),rgba(59,130,246,0))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);margin-bottom:20px;overflow:hidden;transition:border-color 0.2s}
+.card:hover{border-color:var(--line2)}
+.card-hd{padding:18px 22px 0;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:500;color:var(--tx);display:flex;align-items:center;gap:8px}
+.card-title-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.card-body{padding:0 22px 22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.badge{display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px}
+.b-green{background:var(--green-dim);color:var(--green)}.b-amber{background:var(--amber-dim);color:var(--amber)}.b-red{background:var(--red-dim);color:var(--red)}.b-blue{background:var(--blue-dim);color:var(--blue)}.b-violet{background:var(--violet-dim);color:var(--violet)}.b-muted{background:rgba(255,255,255,0.06);color:var(--tx2);border:1px solid var(--line)}
+.meal-chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--tx)}
+.meal-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.md-b{background:#f59e0b}.md-l{background:#22c55e}.md-d{background:#8b5cf6}
+.id-tag{font-family:monospace;font-size:11.5px;font-weight:500;background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:5px;border:1px solid rgba(34,197,94,0.2)}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:600}
+.p-g{background:var(--green-dim);color:var(--green)}.p-a{background:var(--amber-dim);color:var(--amber)}.p-r{background:var(--red-dim);color:var(--red)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:13px;margin-bottom:16px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fl{font-size:11.5px;font-weight:500;color:var(--tx2);letter-spacing:0.2px}
+.fi,.fs{background:var(--card2);border:1px solid var(--line);border-radius:var(--r);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:400;padding:9px 12px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;width:100%;appearance:none}
+.fi:focus,.fs:focus{border-color:rgba(34,197,94,0.5);box-shadow:0 0 0 3px rgba(34,197,94,0.1)}
+.fi::placeholder{color:var(--tx3)}
+.fs{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath fill='%23565e72' d='M5 7L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer}
+.fs option{background:var(--card2);color:var(--tx)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-weight:500;font-size:13px;padding:9px 18px;cursor:pointer;transition:all 0.15s;white-space:nowrap}
+.btn svg{width:14px;height:14px;fill:currentColor}
+.btn:active{transform:scale(0.98)}
+.btn-g{background:var(--green);color:#051a0c;box-shadow:0 2px 12px rgba(34,197,94,0.25);font-weight:600}
+.btn-g:hover{background:#1cb252;box-shadow:0 4px 18px rgba(34,197,94,0.35);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,0.05);border:1px solid var(--line);color:var(--tx2)}
+.btn-ghost:hover{background:rgba(255,255,255,0.09);color:var(--tx)}
+.btn-danger{background:var(--red-dim);border:1px solid rgba(239,68,68,0.2);color:var(--red)}
+.btn-danger:hover{background:rgba(239,68,68,0.2)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--line)}
+th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:0.7px;white-space:nowrap}
+td{padding:13px 14px;font-size:13.5px;color:var(--tx2);border-bottom:1px solid rgba(255,255,255,0.04)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{transition:background 0.1s}
+tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
+.div{height:1px;background:var(--line);margin:18px 0}
+.alert{display:flex;align-items:flex-start;gap:10px;padding:12px 15px;border-radius:var(--r);font-size:13px;margin-bottom:16px;border:1px solid;line-height:1.55}
+.alert svg{width:15px;height:15px;flex-shrink:0;margin-top:1px;fill:currentColor}
+.al-blue{background:var(--blue-dim);color:#93c5fd;border-color:rgba(59,130,246,0.2)}
+.al-green{background:var(--green-dim);color:#86efac;border-color:rgba(34,197,94,0.2)}
+.al-amber{background:var(--amber-dim);color:#fcd34d;border-color:rgba(245,158,11,0.2)}
+.fbox{background:var(--card2);border:1px solid var(--line);border-radius:var(--r-xl);padding:20px 22px;font-size:13px;color:var(--tx2);line-height:1.7}
+.fbox-title{font-family:'DM Serif Display',serif;font-size:15px;color:var(--tx);margin-bottom:14px}
+.fbox code{display:block;background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:11px 14px;font-family:monospace;font-size:12px;color:#86efac;margin-top:12px;letter-spacing:0.2px}
+.fstep{display:flex;align-items:baseline;gap:9px;padding:3px 0}
+.fnum{font-size:10px;font-weight:700;background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.2);border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.guide{background:linear-gradient(135deg,rgba(34,197,94,0.06) 0%,rgba(34,197,94,0.02) 100%);border:1px solid rgba(34,197,94,0.15);border-radius:var(--r-xl);padding:20px 22px;margin-bottom:0}
+.guide-title{font-family:'DM Serif Display',serif;font-size:15px;color:var(--tx);margin-bottom:12px}
+.empty{text-align:center;padding:38px 20px;color:var(--tx3);font-size:13px}
+#toast{position:fixed;bottom:26px;right:26px;background:var(--card2);color:var(--tx);padding:12px 18px;border-radius:var(--r-lg);font-size:13.5px;font-weight:400;display:none;z-index:9999;border:1px solid var(--line2);box-shadow:0 8px 32px rgba(0,0,0,0.4);max-width:340px;border-left:3px solid var(--green);animation:up 0.22s ease}
+#toast.err{border-left-color:var(--red)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:150;backdrop-filter:blur(3px)}
+.wbar-wrap{display:flex;align-items:center;gap:8px;min-width:120px}
+.wbar{flex:1;height:4px;background:var(--card2);border-radius:4px;overflow:hidden}
+.wbar-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+.wbar-label{font-size:11.5px;color:var(--tx3);white-space:nowrap;width:34px;text-align:right}
+
+/* ─── STEPPER (for merged entry tab) ─── */
+.stepper{display:flex;align-items:stretch;gap:0;margin-bottom:28px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);overflow:hidden}
+.step-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px 12px;cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;color:var(--tx3);transition:all 0.2s;position:relative;border-right:1px solid var(--line)}
+.step-item:last-child{border-right:none}
+.step-item:hover{background:rgba(255,255,255,0.04);color:var(--tx2)}
+.step-item.active{background:var(--green-dim);color:var(--green)}
+.step-item.done{background:rgba(34,197,94,0.05);color:var(--green)}
+.step-num{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;transition:all 0.2s}
+.step-item.done .step-num{background:var(--green);border-color:var(--green);color:#051a0c}
+.step-item.active .step-num{background:var(--green);border-color:var(--green);color:#051a0c;box-shadow:0 0 0 4px rgba(34,197,94,0.2)}
+.step-label{font-size:12px;font-weight:500;text-align:center;line-height:1.3}
+.step-sub{font-size:10.5px;color:var(--tx3);text-align:center;line-height:1.3}
+.step-item.active .step-sub{color:rgba(34,197,94,0.7)}
+
+/* step content panes */
+.step-content{display:none}.step-content.active{display:block;animation:up 0.2s ease}
+
+/* meal-id chip in log step */
+.mid-chip{display:inline-flex;align-items:center;gap:8px;background:var(--green-dim);border:1px solid rgba(34,197,94,0.25);border-radius:var(--r);padding:8px 14px;font-size:13.5px;color:var(--green);font-weight:500;margin-bottom:16px}
+.mid-chip svg{width:14px;height:14px;fill:currentColor}
+
+/* entry sub-tabs */
+.etabs{display:flex;gap:4px;margin-bottom:18px;background:var(--card2);border-radius:var(--r);padding:4px;border:1px solid var(--line);width:fit-content}
+.etab{padding:6px 14px;border-radius:7px;border:none;background:none;color:var(--tx3);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.15s}
+.etab.on{background:var(--card);color:var(--tx);border:1px solid var(--line2)}
+.etab:hover:not(.on){color:var(--tx2)}
+.epane{display:none}.epane.on{display:block;animation:up 0.18s ease}
+
+@media(max-width:1100px){.kpi-row{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+@media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform 0.28s ease}.sidebar.open{transform:translateX(0);box-shadow:0 0 60px rgba(0,0,0,0.6)}.overlay.open{display:block}.main{margin-left:0}.topbar{padding:0 18px}.content{padding:20px 18px 50px}.btn-ham{display:flex;align-items:center;justify-content:center}.chip{display:none}.stepper{flex-direction:column}}
+@media(max-width:480px){.kpi-row{gap:10px}.kpi{padding:16px 16px 14px}.kpi-val{font-size:28px}}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="ov" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sb">
+  <div class="brand-wrap">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+      </div>
+      <div class="brand-name">FoodWise</div>
+    </div>
+    <div class="brand-sub">Hostel Kitchen Analytics</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-label">Overview</div>
+    <button class="nav-item on" onclick="showTab('dashboard',this)">
+      <span class="ni"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg></span>
+      Dashboard
+    </button>
+
+    <div class="nav-label">Data Entry</div>
+    <button class="nav-item" onclick="showTab('entry',this)">
+      <span class="ni"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg></span>
+      Add &amp; Log
+    </button>
+
+    <div class="nav-label">Analytics</div>
+    <button class="nav-item" onclick="showTab('wastage',this)">
+      <span class="ni"><svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg></span>
+      Wastage Report
+    </button>
+    <button class="nav-item" onclick="showTab('predictions',this)">
+      <span class="ni"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg></span>
+      Predictions
+    </button>
+  </nav>
+
+  <div class="sidebar-foot"><span>FoodWise v3 — DBMS Project</span></div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="btn-ham" onclick="openSidebar()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      </button>
+      <div>
+        <div class="page-title" id="pt">Dashboard</div>
+        <div class="page-crumb" id="pc">Overview of your hostel kitchen data</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="chip" id="datechip"></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════ DASHBOARD ═══════ -->
+    <div id="p-dashboard" class="panel on">
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">Meals Logged</div>
+          <div class="kpi-val" id="stat-meals">—</div>
+          <div class="kpi-sub">total meals recorded</div>
+          <div class="kpi-icon ki-g"><svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Total Wasted</div>
+          <div class="kpi-val" id="stat-waste">—</div>
+          <div class="kpi-sub">kg food wasted overall</div>
+          <div class="kpi-icon ki-r"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Avg Waste / Student</div>
+          <div class="kpi-val" id="stat-avg">—</div>
+          <div class="kpi-sub">kg per student avg</div>
+          <div class="kpi-icon ki-a"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Log Entries</div>
+          <div class="kpi-val" id="stat-entries">—</div>
+          <div class="kpi-sub">wastage records total</div>
+          <div class="kpi-icon ki-b"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15h8v2H8zm0-4h8v2H8z"/></svg></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <span class="card-title-dot" style="background:var(--green)"></span>
+            Recent Meals
+          </span>
+          <button class="btn btn-ghost" onclick="loadDashboard()" style="font-size:12px;padding:6px 13px">Refresh</button>
+        </div>
+        <div class="card-body">
+          <div class="tw">
+            <table>
+              <thead><tr><th>ID</th><th>Date</th><th>Meal</th><th>Students</th><th>Prepared kg</th><th>Consumed kg</th><th>Wasted kg</th><th>Wastage %</th></tr></thead>
+              <tbody id="dash-table"><tr><td colspan="8" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ ENTRY (merged Add Meal + Log Data) ═══════ -->
+    <div id="p-entry" class="panel">
+
+      <!-- Stepper -->
+      <div class="stepper">
+        <button class="step-item active" id="sv-1" onclick="goStep(1)">
+          <span class="step-num" id="sn-1">1</span>
+          <span class="step-label">Create Meal</span>
+          <span class="step-sub">Set date &amp; type</span>
+        </button>
+        <button class="step-item" id="sv-2" onclick="goStep(2)">
+          <span class="step-num" id="sn-2">2</span>
+          <span class="step-label">Attendance</span>
+          <span class="step-sub">Students present</span>
+        </button>
+        <button class="step-item" id="sv-3" onclick="goStep(3)">
+          <span class="step-num" id="sn-3">3</span>
+          <span class="step-label">Food Data</span>
+          <span class="step-sub">Prepared &amp; consumed</span>
+        </button>
+        <button class="step-item" id="sv-4" onclick="goStep(4)">
+          <span class="step-num" id="sn-4">4</span>
+          <span class="step-label">Complete</span>
+          <span class="step-sub">Wastage auto-logged</span>
+        </button>
+      </div>
+
+      <!-- Step 1: Create Meal -->
+      <div class="step-content active" id="sc-1">
+        <div class="grid2" style="margin-bottom:20px">
+          <div class="card" style="margin-bottom:0">
+            <div class="card-hd">
+              <span class="card-title">
+                <span class="card-title-dot" style="background:var(--amber)"></span>
+                New Meal Event
+              </span>
+              <span class="badge b-amber">Step 1 of 3</span>
+            </div>
+            <div class="card-body">
+              <div class="fgrid">
+                <div class="fg">
+                  <label class="fl">Meal Date</label>
+                  <input class="fi" type="date" id="meal-date"/>
+                </div>
+                <div class="fg">
+                  <label class="fl">Meal Type</label>
+                  <select class="fs" id="meal-type">
+                    <option value="">Select type…</option>
+                    <option>Breakfast</option>
+                    <option>Lunch</option>
+                    <option>Dinner</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-g" onclick="addMealAndNext()">
+                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                Create Meal &amp; Continue
+              </button>
+            </div>
+          </div>
+
+          <div class="guide">
+            <div class="guide-title">Data Entry Flow</div>
+            <div style="font-size:13px;color:var(--tx2);line-height:2">
+              <div>① Create a meal → get a <span style="color:var(--green);font-weight:500">Meal ID</span></div>
+              <div>② Log how many students attended</div>
+              <div>③ Enter food prepared + consumed</div>
+              <div>④ MySQL trigger <span style="color:var(--green);font-weight:500">auto-calculates wastage</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd">
+            <span class="card-title">
+              <span class="card-title-dot" style="background:var(--tx3)"></span>
+              All Meals
+            </span>
+            <button class="btn btn-ghost" onclick="loadAllMeals()" style="font-size:12px;padding:6px 13px">Refresh</button>
+          </div>
+          <div class="card-body">
+            <div class="tw">
+              <table>
+                <thead><tr><th>Meal ID</th><th>Date</th><th>Type</th><th>Students</th><th>Prepared kg</th><th>Consumed kg</th><th>Wasted kg</th><th>%</th></tr></thead>
+                <tbody id="all-meals-table"><tr><td colspan="8" class="empty">Click Refresh to load</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Attendance -->
+      <div class="step-content" id="sc-2">
+        <div class="mid-chip" id="step2-mid-display">
+          <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+          Working on <strong>Meal ID: <span id="current-mid-2">—</span></strong>
+        </div>
+
+        <div class="grid2">
+          <div class="card" style="margin-bottom:0">
+            <div class="card-hd">
+              <span class="card-title">
+                <span class="card-title-dot" style="background:var(--amber)"></span>
+                Attendance
+              </span>
+              <span class="badge b-amber">Step 2 of 3</span>
+            </div>
+            <div class="card-body">
+              <div class="fgrid">
+                <div class="fg">
+                  <label class="fl">Meal ID</label>
+                  <input class="fi" type="number" id="att-meal-id" placeholder="e.g. 1" min="1"/>
+                </div>
+                <div class="fg">
+                  <label class="fl">Students Present</label>
+                  <input class="fi" type="number" id="att-students" placeholder="e.g. 120" min="0"/>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-g" onclick="addAttendanceAndNext()">Save &amp; Continue to Food Data →</button>
+                <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="fbox">
+            <div class="fbox-title">Why attendance matters</div>
+            <p style="margin-bottom:8px">Attendance drives the <strong style="color:var(--tx)">waste-per-student</strong> metric and the prediction algorithm.</p>
+            <p>Higher attendance → more food needed → accurate portion planning for tomorrow.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Food Data -->
+      <div class="step-content" id="sc-3">
+        <div class="mid-chip" id="step3-mid-display">
+          <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+          Working on <strong>Meal ID: <span id="current-mid-3">—</span></strong>
+        </div>
+
+        <!-- Subtabs: Prepared | Consumed -->
+        <div class="etabs">
+          <button class="etab on" id="et-prep" onclick="switchEtab('prep')">🥘 Food Prepared</button>
+          <button class="etab" id="et-cons" onclick="switchEtab('cons')">🍽️ Food Consumed</button>
+        </div>
+
+        <!-- Prepared pane -->
+        <div class="epane on" id="ep-prep">
+          <div class="grid2">
+            <div class="card" style="margin-bottom:0">
+              <div class="card-hd">
+                <span class="card-title">
+                  <span class="card-title-dot" style="background:var(--blue)"></span>
+                  Food Prepared
+                </span>
+                <span class="badge b-blue">Kitchen Input</span>
+              </div>
+              <div class="card-body">
+                <div class="fgrid">
+                  <div class="fg"><label class="fl">Meal ID</label><input class="fi" type="number" id="prep-meal-id" placeholder="e.g. 1" min="1"/></div>
+                  <div class="fg"><label class="fl">Quantity (kg)</label><input class="fi" type="number" id="prep-qty" placeholder="e.g. 55.5" min="0" step="0.1"/></div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="btn btn-g" onclick="addPreparedAndSwitch()">Save &amp; Go to Consumed →</button>
+                  <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+                </div>
+              </div>
+            </div>
+            <div class="fbox">
+              <div class="fbox-title">Tip</div>
+              <p>Log <strong style="color:var(--tx)">prepared kg</strong> first — the trigger needs this value to auto-calculate wastage when consumed data is saved.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consumed pane -->
+        <div class="epane" id="ep-cons">
+          <div class="card">
+            <div class="card-hd">
+              <span class="card-title">
+                <span class="card-title-dot" style="background:var(--green)"></span>
+                Food Consumed
+              </span>
+              <span class="badge b-green">Triggers Auto Wastage</span>
+            </div>
+            <div class="card-body">
+              <div class="alert al-green">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14l-4-4 1.41-1.41L10 13.17l6.59-6.59L18 8l-8 8z"/></svg>
+                <span>Saving consumed data fires the <code style="background:rgba(34,197,94,0.15);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11.5px">after_consumed_insert</code> trigger — wastage is auto-calculated and written to <code style="background:rgba(34,197,94,0.15);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11.5px">Wastage_Log</code>.</span>
+              </div>
+              <div class="fgrid">
+                <div class="fg"><label class="fl">Meal ID</label><input class="fi" type="number" id="cons-meal-id" placeholder="e.g. 1" min="1"/></div>
+                <div class="fg"><label class="fl">Quantity Consumed (kg)</label><input class="fi" type="number" id="cons-qty" placeholder="e.g. 48.0" min="0" step="0.1"/></div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-g" onclick="addConsumedAndFinish()">
+                  <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  Save &amp; Auto-Calculate Wastage
+                </button>
+                <button class="btn btn-ghost" onclick="switchEtab('prep')">← Back to Prepared</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Done -->
+      <div class="step-content" id="sc-4">
+        <div class="card" style="text-align:center;padding:40px 32px">
+          <div style="font-size:40px;margin-bottom:12px">✅</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--tx);margin-bottom:8px">Meal Logged Successfully</div>
+          <div style="font-size:13px;color:var(--tx2);margin-bottom:8px">
+            Meal ID <span id="done-mid" class="id-tag" style="font-size:13px">—</span> has been fully recorded.
+          </div>
+          <div class="alert al-green" style="margin:20px auto;max-width:460px;text-align:left">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14l-4-4 1.41-1.41L10 13.17l6.59-6.59L18 8l-8 8z"/></svg>
+            <span id="done-detail">Wastage auto-calculated by trigger.</span>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-g" onclick="startNewEntry()">+ Add Another Meal</button>
+            <button class="btn btn-ghost" onclick="showTab('wastage',null)">View Wastage Report →</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════ WASTAGE REPORT ═══════ -->
+    <div id="p-wastage" class="panel">
+      <div style="display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="loadWastage()">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+          Full Report
+        </button>
+        <button class="btn btn-ghost" onclick="loadSummary()">Group by Meal Type</button>
+      </div>
+
+      <div id="wastage-full" class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <span class="card-title-dot" style="background:var(--red)"></span>
+            Complete Wastage Log
+          </span>
+          <span class="badge b-red">Auto-filled by Trigger</span>
+        </div>
+        <div class="card-body">
+          <div class="tw">
+            <table>
+              <thead><tr><th>Date</th><th>Meal</th><th>Students</th><th>Prepared kg</th><th>Consumed kg</th><th>Wasted kg</th><th>Wastage %</th></tr></thead>
+              <tbody id="wastage-table"><tr><td colspan="8" class="empty">Click "Full Report" to load</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="wastage-summary" class="card" style="display:none">
+        <div class="card-hd">
+          <span class="card-title">
+            <span class="card-title-dot" style="background:var(--violet)"></span>
+            Summary by Meal Type
+          </span>
+          <span class="badge b-violet">GROUP BY Query</span>
+        </div>
+        <div class="card-body">
+          <div class="tw">
+            <table>
+              <thead><tr><th>Meal Type</th><th>Total Meals</th><th>Avg Wastage kg</th><th>Total Wasted kg</th><th>Max Wastage kg</th><th>Avg Students</th></tr></thead>
+              <tbody id="summary-table"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ PREDICTIONS ═══════ -->
+    <div id="p-predictions" class="panel">
+      <div class="grid2" style="margin-bottom:20px">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-hd">
+            <span class="card-title">
+              <span class="card-title-dot" style="background:var(--green)"></span>
+              Smart Auto-Prediction
+            </span>
+            <span class="badge b-green">Recommended</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px;color:var(--tx2);margin-bottom:18px;line-height:1.7">
+              Blends the standard adult portion (0.6 kg/student) with your hostel's actual historical consumption average, then applies a 10% safety buffer for reliable planning.
+            </p>
+            <button class="btn btn-g" onclick="autoPredict()">
+              <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+              Generate Prediction
+            </button>
+          </div>
+        </div>
+        <div class="fbox">
+          <div class="fbox-title">How the formula works</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="fstep"><span class="fnum">1</span><span>Standard = Students × 0.6 kg <span style="color:var(--tx3)">(adult portion)</span></span></div>
+            <div class="fstep"><span class="fnum">2</span><span>Historical = AVG of all past consumed kg</span></div>
+            <div class="fstep"><span class="fnum">3</span><span>Blend = (Standard × 50%) + (Historical × 50%)</span></div>
+            <div class="fstep"><span class="fnum">4</span><span>Final = Blend × 1.10 <span style="color:var(--tx3)">(+10% safety buffer)</span></span></div>
+          </div>
+          <code>qty = ((students × 0.6) × 0.5 + AVG(consumed) × 0.5) × 1.10</code>
+        </div>
+      </div>
+
+      <div class="card" id="pred-result" style="display:none">
+        <div class="card-hd">
+          <span class="card-title">
+            <span class="card-title-dot" style="background:var(--green)"></span>
+            Prediction Results
+          </span>
+          <span class="badge b-green">Historical Data</span>
+        </div>
+        <div class="card-body">
+          <div class="tw">
+            <table>
+              <thead><tr><th>Meal Type</th><th>Predicted Students</th><th>Standard Est. kg</th><th>Historical Avg kg</th><th>Suggested Qty</th><th>Avg Wastage kg</th></tr></thead>
+              <tbody id="pred-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <span class="card-title-dot" style="background:var(--tx3)"></span>
+            Manual Prediction Entry
+          </span>
+          <span class="badge b-muted">Optional</span>
+        </div>
+        <div class="card-body">
+          <div class="fgrid">
+            <div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="pred-date"/></div>
+            <div class="fg">
+              <label class="fl">Meal Type</label>
+              <select class="fs" id="pred-type">
+                <option value="">Select type…</option>
+                <option>Breakfast</option>
+                <option>Lunch</option>
+                <option>Dinner</option>
+              </select>
+            </div>
+            <div class="fg"><label class="fl">Predicted Students</label><input class="fi" type="number" id="pred-students" placeholder="e.g. 120"/></div>
+            <div class="fg"><label class="fl">Suggested Qty (kg)</label><input class="fi" type="number" id="pred-qty" placeholder="e.g. 55.0" step="0.1"/></div>
+          </div>
+          <button class="btn btn-g" onclick="savePrediction()">Save Prediction</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const META={
+  'dashboard':  {t:'Dashboard',c:'Overview of your hostel kitchen data'},
+  'entry':      {t:'Add & Log',c:'Create a meal and record attendance, food data in one flow'},
+  'wastage':    {t:'Wastage Report',c:'Analyse food wastage patterns'},
+  'predictions':{t:'Demand Prediction',c:'Smart quantity suggestions based on history'}
+};
+
+const today=new Date();
+document.getElementById('datechip').textContent=today.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+document.querySelectorAll('input[type="date"]').forEach(e=>e.value=today.toISOString().split('T')[0]);
+
+// ─── NAV ───
+function openSidebar(){document.getElementById('sb').classList.add('open');document.getElementById('ov').classList.add('open')}
+function closeSidebar(){document.getElementById('sb').classList.remove('open');document.getElementById('ov').classList.remove('open')}
+function showTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+name).classList.add('on');
+  if(btn)btn.classList.add('on');
+  const m=META[name];
+  if(m){document.getElementById('pt').textContent=m.t;document.getElementById('pc').textContent=m.c}
+  closeSidebar();
+  if(name==='dashboard')loadDashboard();
+  if(name==='wastage')loadWastage();
+  if(name==='entry'){loadAllMeals();}
+}
+
+// ─── TOAST ───
+function toast(msg,err=false){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className=err?'err':'';el.style.display='block';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',3500);
+}
+
+// ─── HTTP ───
+async function post(url,data){
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return r.json();
+}
+async function get(url){return(await fetch(url)).json()}
+
+// ─── UTILS ───
+function mealChip(type){
+  const c=type==='Breakfast'?'md-b':type==='Lunch'?'md-l':'md-d';
+  return`<span class="meal-chip"><span class="meal-dot ${c}"></span>${type}</span>`;
+}
+function wastageBar(pct){
+  const p=parseFloat(pct)||0;
+  const col=p<10?'var(--green)':p<20?'var(--amber)':'var(--red)';
+  return`<div class="wbar-wrap"><div class="wbar"><div class="wbar-fill" style="width:${Math.min(p,100)}%;background:${col}"></div></div><span class="wbar-label">${p}%</span></div>`;
+}
+
+// ─── STEPPER STATE ───
+let currentStep=1;
+let currentMealId=null;
+
+function goStep(n){
+  // Don't allow jumping to step 2+ without a meal ID
+  if(n>1&&!currentMealId){toast('Create a meal first (Step 1)',true);return}
+  currentStep=n;
+  // Update step indicators
+  for(let i=1;i<=4;i++){
+    const sv=document.getElementById('sv-'+i);
+    const sn=document.getElementById('sn-'+i);
+    sv.classList.remove('active','done');
+    if(i<n){sv.classList.add('done');sn.innerHTML='<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'}
+    else if(i===n){sv.classList.add('active');sn.textContent=i}
+    else{sn.textContent=i}
+  }
+  // Show pane
+  document.querySelectorAll('.step-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('sc-'+n).classList.add('active');
+  // Pre-fill meal IDs
+  if(currentMealId){
+    ['att-meal-id','prep-meal-id','cons-meal-id'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.value=currentMealId;
+    });
+    document.getElementById('current-mid-2').textContent=currentMealId;
+    document.getElementById('current-mid-3').textContent=currentMealId;
+  }
+}
+
+function startNewEntry(){
+  currentMealId=null;currentStep=1;
+  for(let i=1;i<=4;i++){
+    const sv=document.getElementById('sv-'+i);sv.classList.remove('active','done');
+    document.getElementById('sn-'+i).textContent=i;
+  }
+  document.getElementById('sv-1').classList.add('active');
+  document.querySelectorAll('.step-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('sc-1').classList.add('active');
+}
+
+// Sub-tabs in step 3
+function switchEtab(tab){
+  document.querySelectorAll('.etab').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.epane').forEach(e=>e.classList.remove('on'));
+  document.getElementById('et-'+tab).classList.add('on');
+  document.getElementById('ep-'+tab).classList.add('on');
+}
+
+// ─── DASHBOARD ───
+async function loadDashboard(){
+  try{
+    const s=await get('/wastage/stats');
+    document.getElementById('stat-meals').textContent=s.total_meals_logged??'0';
+    document.getElementById('stat-waste').textContent=s.total_wasted_kg??'0';
+    document.getElementById('stat-avg').textContent=parseFloat(s.avg_waste_per_student_kg||0).toFixed(3);
+    document.getElementById('stat-entries').textContent=s.total_meals_logged??'0';
+    const meals=await get('/meals');
+    const tb=document.getElementById('dash-table');
+    if(!meals.length){tb.innerHTML='<tr><td colspan="8" class="empty">No data yet. Add a meal first.</td></tr>';return}
+    tb.innerHTML=meals.slice(0,10).map(m=>`<tr>
+      <td><span class="id-tag">#${m.meal_id}</span></td>
+      <td style="color:var(--tx3)">${m.meal_date||'—'}</td>
+      <td>${mealChip(m.meal_type)}</td>
+      <td>${m.students_present||0}</td>
+      <td>${m.prepared_kg||0}</td>
+      <td>${m.consumed_kg||0}</td>
+      <td style="font-weight:500">${m.wastage_kg||0}</td>
+      <td>${wastageBar(m.wastage_percent||0)}</td>
+    </tr>`).join('');
+  }catch(e){console.error(e)}
+}
+
+// ─── ENTRY ACTIONS ───
+async function addMealAndNext(){
+  const meal_date=document.getElementById('meal-date').value;
+  const type=document.getElementById('meal-type').value;
+  if(!meal_date||!type)return toast('Fill in date and type',true);
+  try{
+    const r=await fetch('/meals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({meal_date,type})});
+    const result=await r.json();
+    if(result.error)return toast('Error: '+result.error,true);
+    currentMealId=result.meal_id;
+    toast('Meal created — ID: '+currentMealId);
+    loadAllMeals();
+    goStep(2);
+  }catch(err){toast('Server error',true)}
+}
+
+async function loadAllMeals(){
+  const meals=await get('/meals');
+  const tb=document.getElementById('all-meals-table');
+  if(!meals.length){tb.innerHTML='<tr><td colspan="8" class="empty">No meals yet.</td></tr>';return}
+  tb.innerHTML=meals.map(m=>`<tr>
+    <td><span class="id-tag">#${m.meal_id}</span></td>
+    <td style="color:var(--tx3)">${m.meal_date||'—'}</td>
+    <td>${mealChip(m.meal_type)}</td>
+    <td>${m.students_present||0}</td>
+    <td>${m.prepared_kg||0}</td>
+    <td>${m.consumed_kg||0}</td>
+    <td style="font-weight:500">${m.wastage_kg||0}</td>
+    <td>${wastageBar(m.wastage_percent||0)}</td>
+  </tr>`).join('');
+}
+
+async function addAttendanceAndNext(){
+  const meal_id=document.getElementById('att-meal-id').value;
+  const students_present=document.getElementById('att-students').value;
+  if(!meal_id||!students_present)return toast('Fill all fields',true);
+  const r=await post('/attendance',{meal_id:parseInt(meal_id),students_present:parseInt(students_present)});
+  if(r.error)return toast('Error: '+r.error,true);
+  toast('Attendance recorded');
+  if(!currentMealId)currentMealId=parseInt(meal_id);
+  goStep(3);
+}
+
+async function addPreparedAndSwitch(){
+  const meal_id=document.getElementById('prep-meal-id').value;
+  const quantity_prepared_kg=document.getElementById('prep-qty').value;
+  if(!meal_id||!quantity_prepared_kg)return toast('Fill all fields',true);
+  const r=await post('/food/prepared',{meal_id:parseInt(meal_id),quantity_prepared_kg:parseFloat(quantity_prepared_kg)});
+  if(r.error)return toast('Error: '+r.error,true);
+  toast('Food prepared saved');
+  document.getElementById('cons-meal-id').value=meal_id;
+  switchEtab('cons');
+}
+
+async function addConsumedAndFinish(){
+  const meal_id=document.getElementById('cons-meal-id').value;
+  const quantity_consumed_kg=document.getElementById('cons-qty').value;
+  if(!meal_id||!quantity_consumed_kg)return toast('Fill all fields',true);
+  const r=await post('/food/consumed',{meal_id:parseInt(meal_id),quantity_consumed_kg:parseFloat(quantity_consumed_kg)});
+  if(r.error)return toast('Error: '+r.error,true);
+  // Show completion
+  document.getElementById('done-mid').textContent=meal_id;
+  const wasted=r.auto_wastage_kg??'—';
+  document.getElementById('done-detail').textContent=
+    `Wastage auto-calculated: ${wasted} kg. Trigger fired → Wastage_Log updated.`;
+  goStep(4);
+  toast('All data saved. Trigger calculated wastage: '+wasted+' kg');
+}
+
+// ─── WASTAGE ───
+async function loadWastage(){
+  document.getElementById('wastage-full').style.display='block';
+  document.getElementById('wastage-summary').style.display='none';
+  const data=await get('/wastage');
+  const tb=document.getElementById('wastage-table');
+  if(!data.length){tb.innerHTML='<tr><td colspan="8" class="empty">No wastage data yet.</td></tr>';return}
+  tb.innerHTML=data.map(r=>`<tr>
+    <td style="color:var(--tx3)">${r.meal_date||'—'}</td>
+    <td>${mealChip(r.meal_type)}</td>
+    <td>${r.students_present||0}</td>
+    <td>${r.prepared_kg||0}</td>
+    <td>${r.consumed_kg||0}</td>
+    <td style="font-weight:500;color:var(--tx)">${r.wastage_kg||0}</td>
+    <td>${wastageBar(r.wastage_percent||0)}</td>
+  </tr>`).join('');
+}
+
+async function loadSummary(){
+  document.getElementById('wastage-full').style.display='none';
+  document.getElementById('wastage-summary').style.display='block';
+
+  const data = await get('/wastage/summary');
+  const tb = document.getElementById('summary-table');
+
+  if(!data.length){
+    tb.innerHTML = '<tr><td colspan="6" class="empty">No data yet.</td></tr>';
+    return;
+  }
+
+  tb.innerHTML = data.map(r => `<tr>
+    <td>${mealChip(r.meal_type)}</td>
+    <td>${r.total_meals}</td>
+    <td>${r.avg_wastage_kg}</td>
+    <td style="font-weight:500;color:var(--tx)">${r.total_wasted_kg}</td>
+    <td>${r.max_wastage_kg}</td>
+    <td>${r.avg_students}</td>
+  </tr>`).join('');
+}
+
+// ─── PREDICTIONS ───
+async function autoPredict(){
+  const data=await get('/predictions/auto');
+  if(data.error)return toast('Error: '+data.error,true);
+  if(!data.predictions||!data.predictions.length)return toast(data.message||'Not enough data. Complete at least one full meal entry.',true);
+  const tb=document.getElementById('pred-table');
+  tb.innerHTML=data.predictions.map(p=>`<tr>
+    <td>${mealChip(p.meal_type)}</td>
+    <td>${p.predicted_students}</td>
+    <td>${p.standard_estimate_kg}</td>
+    <td>${p.historical_avg_kg}</td>
+    <td><span style="color:var(--green);font-weight:600;font-size:14px">${p.suggested_quantity_kg} kg</span></td>
+    <td>${p.avg_wastage_kg}</td>
+  </tr>`).join('');
+  document.getElementById('pred-result').style.display='block';
+  toast('Prediction generated from historical data');
+}
+
+async function savePrediction(){
+  const d={
+    prediction_date:document.getElementById('pred-date').value,
+    meal_type:document.getElementById('pred-type').value,
+    predicted_students:parseInt(document.getElementById('pred-students').value),
+    suggested_quantity_kg:parseFloat(document.getElementById('pred-qty').value)
+  };
+  if(!d.prediction_date||!d.meal_type||!d.predicted_students||!d.suggested_quantity_kg)return toast('Fill all fields',true);
+  const r=await post('/predictions',d);
+  if(r.error)return toast('Error: '+r.error,true);
+  toast('Prediction saved');
+}
+
+document.addEventListener('DOMContentLoaded',loadDashboard);
+</script>
+</body>
+</html>
