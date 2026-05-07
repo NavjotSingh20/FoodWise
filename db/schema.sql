@@ -2,7 +2,6 @@ DROP DATABASE IF EXISTS foodwise_db;
 CREATE DATABASE foodwise_db;
 USE foodwise_db;
 
--- TABLES
 CREATE TABLE Meal (
     meal_id    INT AUTO_INCREMENT PRIMARY KEY,
     meal_date  DATE NOT NULL,
@@ -21,7 +20,6 @@ CREATE TABLE Food_Prepared (
     prepared_id          INT AUTO_INCREMENT PRIMARY KEY,
     meal_id              INT NOT NULL,
     quantity_prepared_kg DECIMAL(8,2) NOT NULL CHECK (quantity_prepared_kg > 0),
-    cost DECIMAL(10,2) DEFAULT 0,
     FOREIGN KEY (meal_id) REFERENCES Meal(meal_id) ON DELETE CASCADE
 );
 
@@ -40,8 +38,6 @@ CREATE TABLE Wastage_Log (
     FOREIGN KEY (meal_id) REFERENCES Meal(meal_id) ON DELETE CASCADE
 );
 
-
--- Triggers
 DELIMITER $$
 
 CREATE TRIGGER trg_calculate_wastage
@@ -66,6 +62,32 @@ END$$
 
 DELIMITER ;
 
+DELIMITER //
+
+CREATE PROCEDURE GetAutoPredictions()
+BEGIN
+    SELECT
+        m.meal_type,
+        ROUND(AVG(a.students_present), 0)         AS predicted_students,
+        ROUND(AVG(a.students_present) * 0.6, 2)   AS standard_estimate_kg,
+        ROUND(AVG(fc.quantity_consumed_kg), 2)     AS historical_avg_kg,
+        ROUND(AVG(wl.wastage_kg), 2)               AS avg_wastage_kg,
+        ROUND(
+            ((AVG(a.students_present) * 0.6) * 0.5
+            + AVG(fc.quantity_consumed_kg) * 0.5)
+            * 1.102
+        , 2) AS suggested_quantity_kg
+    FROM Meal m
+    JOIN Attendance a     ON m.meal_id = a.meal_id
+    JOIN Food_Consumed fc ON m.meal_id = fc.meal_id
+    JOIN Wastage_Log wl   ON m.meal_id = wl.meal_id
+    GROUP BY m.meal_type
+    ORDER BY m.meal_type;
+END //
+
+DELIMITER ;
+
+-- 🔹 Dashboard main table
 CREATE VIEW vw_meal_summary AS
 SELECT 
     m.meal_id,
@@ -86,7 +108,7 @@ LEFT JOIN Food_Prepared fp ON m.meal_id = fp.meal_id
 LEFT JOIN Food_Consumed fc ON m.meal_id = fc.meal_id
 LEFT JOIN Wastage_Log wl ON m.meal_id = wl.meal_id;
 
--- Wastage summary
+-- 🔹 Wastage summary
 CREATE VIEW vw_wastage_by_type AS
 SELECT 
     m.meal_type,
@@ -97,17 +119,7 @@ FROM Meal m
 LEFT JOIN Wastage_Log w ON m.meal_id = w.meal_id
 GROUP BY m.meal_type;
 
--- Trend chart
-CREATE VIEW vw_daily_trend AS
-SELECT 
-    m.meal_date,
-    ROUND(SUM(COALESCE(w.wastage_kg,0)),2) AS total_wastage
-FROM Meal m
-LEFT JOIN Wastage_Log w ON m.meal_id = w.meal_id
-GROUP BY m.meal_date
-ORDER BY m.meal_date DESC;
 
--- SAMPLE DATA (For Testing and Demonstration)
 INSERT INTO Meal (meal_date, meal_type) VALUES
 ('2024-06-10','Breakfast'),
 ('2024-06-10','Lunch'),
