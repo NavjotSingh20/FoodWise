@@ -1,13 +1,8 @@
-// routes/wastage.js (FINAL CLEAN VERSION)
-
 const express = require('express');
 const router  = express.Router();
 const db      = require('../db/connection');
 
 
-// ==========================
-// GET /wastage (MAIN TABLE - FIXED DATE)
-// ==========================
 router.get('/', async (req, res) => {
     try {
         const [rows] = await db.execute(`
@@ -31,10 +26,6 @@ router.get('/', async (req, res) => {
     }
 });
 
-
-// ==========================
-// GET /wastage/summary (FIXED)
-// ==========================
 router.get('/summary', async (req, res) => {
     try {
         const [rows] = await db.execute(`
@@ -56,10 +47,8 @@ router.get('/summary', async (req, res) => {
     }
 });
 
+(DATE FIXED)
 
-// ==========================
-// GET /wastage/trend (DATE FIXED)
-// ==========================
 router.get('/trend', async (req, res) => {
     try {
         const [rows] = await db.execute(`
@@ -76,10 +65,6 @@ router.get('/trend', async (req, res) => {
     }
 });
 
-
-// ==========================
-// GET /wastage/stats (FIXED)
-// ==========================
 router.get('/stats', async (req, res) => {
     try {
         const [[stats]] = await db.execute(`
@@ -97,10 +82,6 @@ router.get('/stats', async (req, res) => {
     }
 });
 
-
-// ==========================
-// POST /wastage/report
-// ==========================
 router.post('/report', async (req, res) => {
     try {
         const { start_date, end_date, hostel_id = 0 } = req.body;
@@ -127,10 +108,6 @@ router.post('/report', async (req, res) => {
     }
 });
 
-
-// ==========================
-// GET /wastage/audit
-// ==========================
 router.get('/audit', async (req, res) => {
     try {
         const [rows] = await db.execute(`
