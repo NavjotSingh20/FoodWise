@@ -205,7 +205,7 @@ After running `schema.sql`, sample data is already inserted. You can:
 7. Multi-table JOINs (LEFT JOIN, INNER JOIN)
 8. GROUP BY with aggregate functions
 9. COALESCE for NULL handling
-10. CASE WHEN conditional logic
+10. CASE WHEN logical condition
 11. REST API design
 12. CRUD operations
 
