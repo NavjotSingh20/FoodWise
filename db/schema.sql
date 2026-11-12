@@ -181,6 +181,12 @@ BEGIN
     VALUES ('Attendance', 'UPDATE', NEW.attendance_id, CURRENT_USER());
 END$$
 
+CREATE TRIGGER trg_audit_attendance_del AFTER DELETE ON Attendance FOR EACH ROW
+BEGIN
+    INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
+    VALUES ('Attendance', 'DELETE', OLD.attendance_id, CURRENT_USER());
+END$$
+
 CREATE TRIGGER trg_audit_prepared_ins AFTER INSERT ON Food_Prepared FOR EACH ROW
 BEGIN
     INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
@@ -191,6 +197,12 @@ CREATE TRIGGER trg_audit_prepared_upd AFTER UPDATE ON Food_Prepared FOR EACH ROW
 BEGIN
     INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
     VALUES ('Food_Prepared', 'UPDATE', NEW.prepared_id, CURRENT_USER());
+END$$
+
+CREATE TRIGGER trg_audit_prepared_del AFTER DELETE ON Food_Prepared FOR EACH ROW
+BEGIN
+    INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
+    VALUES ('Food_Prepared', 'DELETE', OLD.prepared_id, CURRENT_USER());
 END$$
 
 CREATE TRIGGER trg_audit_consumed_ins AFTER INSERT ON Food_Consumed FOR EACH ROW
@@ -205,6 +217,13 @@ BEGIN
     VALUES ('Food_Consumed', 'UPDATE', NEW.consumed_id, CURRENT_USER());
 END$$
 
+CREATE TRIGGER trg_audit_consumed_del AFTER DELETE ON Food_Consumed FOR EACH ROW
+BEGIN
+    DELETE FROM Wastage_Log WHERE meal_id = OLD.meal_id;
+    INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
+    VALUES ('Food_Consumed', 'DELETE', OLD.consumed_id, CURRENT_USER());
+END$$
+
 CREATE TRIGGER trg_audit_wastage_ins AFTER INSERT ON Wastage_Log FOR EACH ROW
 BEGIN
     INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
@@ -217,10 +236,28 @@ BEGIN
     VALUES ('Wastage_Log', 'UPDATE', NEW.wastage_id, CURRENT_USER());
 END$$
 
+CREATE TRIGGER trg_audit_wastage_del AFTER DELETE ON Wastage_Log FOR EACH ROW
+BEGIN
+    INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
+    VALUES ('Wastage_Log', 'DELETE', OLD.wastage_id, CURRENT_USER());
+END$$
+
 CREATE TRIGGER trg_audit_prediction_ins AFTER INSERT ON Prediction FOR EACH ROW
 BEGIN
     INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
     VALUES ('Prediction', 'INSERT', NEW.prediction_id, CURRENT_USER());
+END$$
+
+CREATE TRIGGER trg_audit_prediction_upd AFTER UPDATE ON Prediction FOR EACH ROW
+BEGIN
+    INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
+    VALUES ('Prediction', 'UPDATE', NEW.prediction_id, CURRENT_USER());
+END$$
+
+CREATE TRIGGER trg_audit_prediction_del AFTER DELETE ON Prediction FOR EACH ROW
+BEGIN
+    INSERT INTO Audit_Log (table_name, action, record_id, changed_by)
+    VALUES ('Prediction', 'DELETE', OLD.prediction_id, CURRENT_USER());
 END$$
 
 DELIMITER ;

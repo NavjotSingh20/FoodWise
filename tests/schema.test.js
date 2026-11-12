@@ -18,6 +18,8 @@ test('db/schema.sql defines every table, view, trigger, and procedure used by th
         /CREATE TABLE Prediction\b/i,
         /CREATE TABLE Audit_Log\b/i,
         /CREATE TRIGGER trg_calculate_wastage\b/i,
+        /CREATE TRIGGER trg_audit_consumed_del\b/i,
+        /CREATE TRIGGER trg_audit_prediction_del\b/i,
         /CREATE VIEW vw_meal_summary\b/i,
         /CREATE VIEW vw_wastage_by_type\b/i,
         /CREATE VIEW vw_daily_trend\b/i,

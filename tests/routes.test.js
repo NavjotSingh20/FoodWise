@@ -89,9 +89,46 @@ test('Meals routes: GET /meals, POST /meals validation, creation, and duplicate 
         body: JSON.stringify({ meal_date: '2024-06-11', meal_type: 'Lunch' })
     });
     assert.equal(dup.status, 409);
+
+    db.execute = async () => [[{ meal_id: 1, meal_date: '2024-06-10', meal_type: 'Breakfast' }]];
+    const single = await api('/meals/1');
+    assert.equal(single.status, 200);
+    assert.equal(single.body.meal_id, 1);
+
+    const badSingleId = await api('/meals/abc');
+    assert.equal(badSingleId.status, 400);
+
+    db.execute = async () => [{ affectedRows: 1 }];
+    const updatedMeal = await api('/meals/1', {
+        method: 'PUT',
+        body: JSON.stringify({ meal_date: '2024-06-10', meal_type: 'Dinner' })
+    });
+    assert.equal(updatedMeal.status, 200);
+
+    db.execute = async () => [{ affectedRows: 0 }];
+    const missingPut = await api('/meals/999', {
+        method: 'PUT',
+        body: JSON.stringify({ meal_date: '2024-06-10', meal_type: 'Dinner' })
+    });
+    assert.equal(missingPut.status, 404);
+
+    db.execute = async () => [{ affectedRows: 1 }];
+    const deletedMeal = await api('/meals/1', { method: 'DELETE' });
+    assert.equal(deletedMeal.status, 200);
+    assert.equal(deletedMeal.body.meal_id, 1);
 });
 
-test('Attendance route: validates input, checks meal existence, and upserts cleanly', async () => {
+test('Attendance routes: GET /attendance, GET /attendance/avg, and POST /attendance upsert', async () => {
+    db.execute = async () => [[{ attendance_id: 1, meal_id: 1, students_present: 120 }]];
+    const listRes = await api('/attendance');
+    assert.equal(listRes.status, 200);
+    assert.equal(listRes.body.length, 1);
+
+    db.execute = async () => [[{ meal_type: 'Breakfast', total_records: 1, avg_students: 120 }]];
+    const avgRes = await api('/attendance/avg');
+    assert.equal(avgRes.status, 200);
+    assert.equal(avgRes.body[0].avg_students, 120);
+
     const bad = await api('/attendance', {
         method: 'POST',
         body: JSON.stringify({ meal_id: 1, students_present: -5 })
@@ -221,6 +258,26 @@ test('Predictions routes: /auto stored procedure shape and POST/GET validation',
     });
     assert.equal(savedPred.status, 201);
     assert.equal(savedPred.body.prediction_id, 2);
+
+    db.execute = async () => [{ affectedRows: 1 }];
+    const updPred = await api('/predictions/2', {
+        method: 'PUT',
+        body: JSON.stringify({
+            prediction_date: '2024-06-13',
+            meal_type: 'Lunch',
+            predicted_students: 110,
+            suggested_quantity_kg: 62.5
+        })
+    });
+    assert.equal(updPred.status, 200);
+
+    db.execute = async () => [{ affectedRows: 0 }];
+    const missingDel = await api('/predictions/999', { method: 'DELETE' });
+    assert.equal(missingDel.status, 404);
+
+    db.execute = async () => [{ affectedRows: 1 }];
+    const delPred = await api('/predictions/2', { method: 'DELETE' });
+    assert.equal(delPred.status, 200);
 });
 
 test('Error handlers: 400 on invalid JSON and 404 on unknown route', async () => {
@@ -245,4 +302,18 @@ test('Frontend public/index.html matches backend contracts', () => {
     assert.doesNotMatch(html, /id="wastage-table"><tr><td colspan="8"/);
     assert.match(html, /function loadWastage\(\)[\s\S]*?colspan="7"/);
     assert.doesNotMatch(html, /async function loadWastage\(\)[\s\S]{0,400}colspan="8"/);
+    for (const fn of [
+        'loadAttendanceAvg',
+        'openEditMealModal',
+        'deleteMeal',
+        'runDateReport',
+        'loadTrend',
+        'loadAudit',
+        'saveAutoPrediction',
+        'loadSavedPredictions',
+        'openEditPredModal',
+        'deletePrediction'
+    ]) {
+        assert.match(html, new RegExp(`function ${fn}\\(`));
+    }
 });

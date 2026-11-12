@@ -155,6 +155,15 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
 .etab.on{background:var(--card);color:var(--tx);border:1px solid var(--line2)}
 .etab:hover:not(.on){color:var(--tx2)}
 .epane{display:none}.epane.on{display:block;animation:up 0.18s ease}
+.btn-sm{padding:5px 10px;font-size:11.5px;border-radius:7px}
+.act-wrap{display:flex;gap:6px;align-items:center}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.68);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.open{display:flex}
+.modal-card{background:var(--card);border:1px solid var(--line2);border-radius:var(--r-xl);width:100%;max-width:480px;overflow:hidden;animation:up 0.2s ease}
+.trend-row{display:grid;grid-template-columns:110px 1fr 75px;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.trend-row:last-child{border-bottom:none}
+.trend-track{height:10px;background:var(--card2);border-radius:6px;overflow:hidden}
+.trend-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--amber),var(--red));transition:width 0.4s ease}
 
 @media(max-width:1100px){.kpi-row{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
 @media(max-width:768px){.sidebar{transform:translateX(-100%);transition:transform 0.28s ease}.sidebar.open{transform:translateX(0);box-shadow:0 0 60px rgba(0,0,0,0.6)}.overlay.open{display:block}.main{margin-left:0}.topbar{padding:0 18px}.content{padding:20px 18px 50px}.btn-ham{display:flex;align-items:center;justify-content:center}.chip{display:none}.stepper{flex-direction:column}}
@@ -198,6 +207,10 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
     <button class="nav-item" data-tab="predictions" onclick="showTab('predictions',this)">
       <span class="ni"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg></span>
       Predictions
+    </button>
+    <button class="nav-item" data-tab="audit" onclick="showTab('audit',this)">
+      <span class="ni"><svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg></span>
+      Audit Log
     </button>
   </nav>
 
@@ -263,8 +276,26 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
         <div class="card-body">
           <div class="tw">
             <table>
-              <thead><tr><th>ID</th><th>Date</th><th>Meal</th><th>Students</th><th>Prepared kg</th><th>Consumed kg</th><th>Wasted kg</th><th>Wastage %</th></tr></thead>
-              <tbody id="dash-table"><tr><td colspan="8" class="empty">Loading…</td></tr></tbody>
+              <thead><tr><th>ID</th><th>Date</th><th>Meal</th><th>Students</th><th>Prepared kg</th><th>Consumed kg</th><th>Wasted kg</th><th>Wastage %</th><th>Actions</th></tr></thead>
+              <tbody id="dash-table"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <span class="card-title-dot" style="background:var(--amber)"></span>
+            Average Attendance by Meal Type
+          </span>
+          <span class="badge b-amber">GET /attendance/avg</span>
+        </div>
+        <div class="card-body">
+          <div class="tw">
+            <table>
+              <thead><tr><th>Meal Type</th><th>Records</th><th>Avg Students</th><th>Min Students</th><th>Max Students</th></tr></thead>
+              <tbody id="att-avg-table"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -354,8 +385,8 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
           <div class="card-body">
             <div class="tw">
               <table>
-                <thead><tr><th>Meal ID</th><th>Date</th><th>Type</th><th>Students</th><th>Prepared kg</th><th>Consumed kg</th><th>Wasted kg</th><th>%</th></tr></thead>
-                <tbody id="all-meals-table"><tr><td colspan="8" class="empty">Click Refresh to load</td></tr></tbody>
+                <thead><tr><th>Meal ID</th><th>Date</th><th>Type</th><th>Students</th><th>Prepared kg</th><th>Consumed kg</th><th>Wasted kg</th><th>%</th><th>Actions</th></tr></thead>
+                <tbody id="all-meals-table"><tr><td colspan="9" class="empty">Click Refresh to load</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -501,11 +532,13 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
     <!-- ═══════ WASTAGE REPORT ═══════ -->
     <div id="p-wastage" class="panel">
       <div style="display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap">
-        <button class="btn btn-g" onclick="loadWastage()">
+        <button class="btn btn-g" id="wb-full" onclick="loadWastage()">
           <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
           Full Report
         </button>
-        <button class="btn btn-ghost" onclick="loadSummary()">Group by Meal Type</button>
+        <button class="btn btn-ghost" id="wb-summary" onclick="loadSummary()">Group by Meal Type</button>
+        <button class="btn btn-ghost" id="wb-report" onclick="showDateReport()">Date-Range Report</button>
+        <button class="btn btn-ghost" id="wb-trend" onclick="loadTrend()">Daily Trend</button>
       </div>
 
       <div id="wastage-full" class="card">
@@ -539,6 +572,69 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
             <table>
               <thead><tr><th>Meal Type</th><th>Total Meals</th><th>Avg Wastage kg</th><th>Total Wasted kg</th><th>Max Wastage kg</th><th>Avg Students</th></tr></thead>
               <tbody id="summary-table"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="wastage-report" style="display:none">
+        <div class="card">
+          <div class="card-hd">
+            <span class="card-title">
+              <span class="card-title-dot" style="background:var(--blue)"></span>
+              Date-Range Filter
+            </span>
+            <span class="badge b-blue">Stored Procedure</span>
+          </div>
+          <div class="card-body">
+            <div class="fgrid">
+              <div class="fg"><label class="fl">Start Date</label><input class="fi" type="date" id="rep-start"/></div>
+              <div class="fg"><label class="fl">End Date</label><input class="fi" type="date" id="rep-end"/></div>
+            </div>
+            <button class="btn btn-g" onclick="runDateReport()">Run Report</button>
+          </div>
+        </div>
+
+        <div class="card" id="rep-results" style="display:none">
+          <div class="card-hd">
+            <span class="card-title">
+              <span class="card-title-dot" style="background:var(--green)"></span>
+              Report Summary &amp; Details
+            </span>
+            <span class="badge b-green" id="rep-range-badge">Filtered</span>
+          </div>
+          <div class="card-body">
+            <div class="tw" style="margin-bottom:20px">
+              <table>
+                <thead><tr><th>Meal Type</th><th>Total Meals</th><th>Prepared kg</th><th>Consumed kg</th><th>Total Wasted kg</th><th>Avg Wastage kg</th></tr></thead>
+                <tbody id="rep-summary-table"></tbody>
+              </table>
+            </div>
+            <div class="div"></div>
+            <div class="tw">
+              <table>
+                <thead><tr><th>ID</th><th>Date</th><th>Meal</th><th>Students</th><th>Prepared kg</th><th>Consumed kg</th><th>Wasted kg</th><th>Wastage %</th></tr></thead>
+                <tbody id="rep-detail-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="wastage-trend" class="card" style="display:none">
+        <div class="card-hd">
+          <span class="card-title">
+            <span class="card-title-dot" style="background:var(--amber)"></span>
+            Daily Wastage Trend
+          </span>
+          <span class="badge b-amber">vw_daily_trend</span>
+        </div>
+        <div class="card-body">
+          <div id="trend-chart" style="margin-bottom:18px"></div>
+          <div class="tw">
+            <table>
+              <thead><tr><th>Date</th><th>Total Wastage (kg)</th></tr></thead>
+              <tbody id="trend-table"><tr><td colspan="2" class="empty">Loading…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -584,12 +680,16 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
             <span class="card-title-dot" style="background:var(--green)"></span>
             Prediction Results
           </span>
-          <span class="badge b-green">Historical Data</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <label class="fl" for="auto-pred-date" style="margin:0">Target Date</label>
+            <input class="fi" type="date" id="auto-pred-date" style="width:auto;padding:5px 10px;font-size:12px"/>
+            <span class="badge b-green">Historical Data</span>
+          </div>
         </div>
         <div class="card-body">
           <div class="tw">
             <table>
-              <thead><tr><th>Meal Type</th><th>Predicted Students</th><th>Standard Est. kg</th><th>Historical Avg kg</th><th>Suggested Qty</th><th>Avg Wastage kg</th></tr></thead>
+              <thead><tr><th>Meal Type</th><th>Predicted Students</th><th>Standard Est. kg</th><th>Historical Avg kg</th><th>Suggested Qty</th><th>Avg Wastage kg</th><th>Save</th></tr></thead>
               <tbody id="pred-table"></tbody>
             </table>
           </div>
@@ -616,14 +716,120 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
                 <option>Dinner</option>
               </select>
             </div>
-            <div class="fg"><label class="fl">Predicted Students</label><input class="fi" type="number" id="pred-students" placeholder="e.g. 120"/></div>
-            <div class="fg"><label class="fl">Suggested Qty (kg)</label><input class="fi" type="number" id="pred-qty" placeholder="e.g. 55.0" step="0.1"/></div>
+            <div class="fg"><label class="fl">Predicted Students</label><input class="fi" type="number" id="pred-students" placeholder="e.g. 120" min="0"/></div>
+            <div class="fg"><label class="fl">Suggested Qty (kg)</label><input class="fi" type="number" id="pred-qty" placeholder="e.g. 55.0" min="0" step="0.1"/></div>
           </div>
           <button class="btn btn-g" onclick="savePrediction()">Save Prediction</button>
         </div>
       </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <span class="card-title-dot" style="background:var(--blue)"></span>
+            Saved Predictions
+          </span>
+          <button class="btn btn-ghost" onclick="loadSavedPredictions()" style="font-size:12px;padding:6px 13px">Refresh</button>
+        </div>
+        <div class="card-body">
+          <div class="tw">
+            <table>
+              <thead><tr><th>ID</th><th>Date</th><th>Meal</th><th>Students</th><th>Standard Est. kg</th><th>Historical Avg kg</th><th>Suggested Qty</th><th>Actions</th></tr></thead>
+              <tbody id="saved-pred-table"><tr><td colspan="8" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- ═══════ AUDIT LOG ═══════ -->
+    <div id="p-audit" class="panel">
+      <div class="card">
+        <div class="card-hd">
+          <span class="card-title">
+            <span class="card-title-dot" style="background:var(--blue)"></span>
+            Database Audit Trail
+          </span>
+          <button class="btn btn-ghost" onclick="loadAudit()" style="font-size:12px;padding:6px 13px">Refresh</button>
+        </div>
+        <div class="card-body">
+          <div class="tw">
+            <table>
+              <thead><tr><th>Audit ID</th><th>Table</th><th>Action</th><th>Record ID</th><th>Changed By</th><th>Changed At</th></tr></thead>
+              <tbody id="audit-table"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EDIT MEAL MODAL -->
+<div class="modal-backdrop" id="edit-meal-modal">
+  <div class="modal-card">
+    <div class="card-hd">
+      <span class="card-title">
+        <span class="card-title-dot" style="background:var(--amber)"></span>
+        Edit Meal <span id="em-id-tag" class="id-tag">#—</span>
+      </span>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('edit-meal-modal')">Close</button>
+    </div>
+    <div class="card-body">
+      <input type="hidden" id="em-id"/>
+      <div class="fgrid">
+        <div class="fg"><label class="fl">Meal Date</label><input class="fi" type="date" id="em-date"/></div>
+        <div class="fg">
+          <label class="fl">Meal Type</label>
+          <select class="fs" id="em-type">
+            <option>Breakfast</option>
+            <option>Lunch</option>
+            <option>Dinner</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Students Present</label><input class="fi" type="number" id="em-students" min="0"/></div>
+        <div class="fg"><label class="fl">Prepared (kg)</label><input class="fi" type="number" id="em-prep" min="0.1" step="0.1"/></div>
+        <div class="fg"><label class="fl">Consumed (kg)</label><input class="fi" type="number" id="em-cons" min="0" step="0.1"/></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal('edit-meal-modal')">Cancel</button>
+        <button class="btn btn-g" onclick="saveMealEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PREDICTION MODAL -->
+<div class="modal-backdrop" id="edit-pred-modal">
+  <div class="modal-card">
+    <div class="card-hd">
+      <span class="card-title">
+        <span class="card-title-dot" style="background:var(--blue)"></span>
+        Edit Prediction <span id="ep-id-tag" class="id-tag">#—</span>
+      </span>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('edit-pred-modal')">Close</button>
+    </div>
+    <div class="card-body">
+      <input type="hidden" id="ep-id"/>
+      <div class="fgrid">
+        <div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="ep-date"/></div>
+        <div class="fg">
+          <label class="fl">Meal Type</label>
+          <select class="fs" id="ep-type">
+            <option>Breakfast</option>
+            <option>Lunch</option>
+            <option>Dinner</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Predicted Students</label><input class="fi" type="number" id="ep-students" min="0"/></div>
+        <div class="fg"><label class="fl">Suggested Qty (kg)</label><input class="fi" type="number" id="ep-qty" min="0" step="0.1"/></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal('edit-pred-modal')">Cancel</button>
+        <button class="btn btn-g" onclick="savePredEdit()">Save Changes</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -633,8 +839,9 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
 const META={
   'dashboard':  {t:'Dashboard',c:'Overview of your hostel kitchen data'},
   'entry':      {t:'Add & Log',c:'Create a meal and record attendance, food data in one flow'},
-  'wastage':    {t:'Wastage Report',c:'Analyse food wastage patterns'},
-  'predictions':{t:'Demand Prediction',c:'Smart quantity suggestions based on history'}
+  'wastage':    {t:'Wastage Report',c:'Analyse food wastage patterns, trends & date-range reports'},
+  'predictions':{t:'Demand Prediction',c:'Smart quantity suggestions and saved forecasts'},
+  'audit':      {t:'Audit Log',c:'Database change history recorded by triggers'}
 };
 
 const today=new Date();
@@ -645,6 +852,7 @@ const localDateStr=[
 ].join('-');
 document.getElementById('datechip').textContent=today.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 document.querySelectorAll('input[type="date"]').forEach(e=>e.value=localDateStr);
+document.getElementById('rep-start').value='2024-06-01';
 
 // ─── NAV ───
 function openSidebar(){document.getElementById('sb').classList.add('open');document.getElementById('ov').classList.add('open')}
@@ -660,15 +868,19 @@ function showTab(name,btn){
   closeSidebar();
   if(name==='dashboard')loadDashboard();
   if(name==='wastage')loadWastage();
-  if(name==='entry'){loadAllMeals();}
+  if(name==='entry')loadAllMeals();
+  if(name==='predictions')loadSavedPredictions();
+  if(name==='audit')loadAudit();
 }
 
-// ─── TOAST ───
+// ─── TOAST & MODALS ───
 function toast(msg,err=false){
   const el=document.getElementById('toast');
   el.textContent=msg;el.className=err?'err':'';el.style.display='block';
   clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',3500);
 }
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
 
 // ─── HTTP ───
 async function requestJson(url,options){
@@ -681,28 +893,56 @@ async function requestJson(url,options){
 async function post(url,data){
   return requestJson(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 }
+async function put(url,data){
+  return requestJson(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+}
+async function del(url){
+  return requestJson(url,{method:'DELETE'});
+}
 async function get(url){return requestJson(url);}
 
 // ─── UTILS ───
+function esc(v){
+  return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function mealChip(type){
   const c=type==='Breakfast'?'md-b':type==='Lunch'?'md-l':'md-d';
-  return`<span class="meal-chip"><span class="meal-dot ${c}"></span>${type}</span>`;
+  return`<span class="meal-chip"><span class="meal-dot ${c}"></span>${esc(type)}</span>`;
 }
 function wastageBar(pct){
   const p=parseFloat(pct)||0;
   const col=p<10?'var(--green)':p<20?'var(--amber)':'var(--red)';
   return`<div class="wbar-wrap"><div class="wbar"><div class="wbar-fill" style="width:${Math.min(p,100)}%;background:${col}"></div></div><span class="wbar-label">${p}%</span></div>`;
 }
+function mealRowHtml(m){
+  return`<tr>
+    <td><span class="id-tag">#${m.meal_id}</span></td>
+    <td style="color:var(--tx3)">${esc(m.meal_date||'—')}</td>
+    <td>${mealChip(m.meal_type)}</td>
+    <td>${m.students_present||0}</td>
+    <td>${m.prepared_kg||0}</td>
+    <td>${m.consumed_kg||0}</td>
+    <td style="font-weight:500">${m.wastage_kg||0}</td>
+    <td>${wastageBar(m.wastage_percent||0)}</td>
+    <td>
+      <div class="act-wrap">
+        <button class="btn btn-ghost btn-sm" onclick="openEditMealModal(${m.meal_id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMeal(${m.meal_id})">Delete</button>
+      </div>
+    </td>
+  </tr>`;
+}
 
-// ─── STEPPER STATE ───
+// ─── STATE ───
 let currentStep=1;
 let currentMealId=null;
+let mealsById=new Map();
+let lastAutoPredictions=[];
+let savedPredictionsById=new Map();
 
 function goStep(n){
-  // Don't allow jumping to step 2+ without a meal ID
   if(n>1&&!currentMealId){toast('Create a meal first (Step 1)',true);return}
   currentStep=n;
-  // Update step indicators
   for(let i=1;i<=4;i++){
     const sv=document.getElementById('sv-'+i);
     const sn=document.getElementById('sn-'+i);
@@ -711,10 +951,8 @@ function goStep(n){
     else if(i===n){sv.classList.add('active');sn.textContent=i}
     else{sn.textContent=i}
   }
-  // Show pane
   document.querySelectorAll('.step-content').forEach(c=>c.classList.remove('active'));
   document.getElementById('sc-'+n).classList.add('active');
-  // Pre-fill meal IDs
   if(currentMealId){
     ['att-meal-id','prep-meal-id','cons-meal-id'].forEach(id=>{
       const el=document.getElementById(id);
@@ -736,7 +974,6 @@ function startNewEntry(){
   document.getElementById('sc-1').classList.add('active');
 }
 
-// Sub-tabs in step 3
 function switchEtab(tab){
   document.querySelectorAll('.etab').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.epane').forEach(e=>e.classList.remove('on'));
@@ -744,7 +981,26 @@ function switchEtab(tab){
   document.getElementById('ep-'+tab).classList.add('on');
 }
 
-// ─── DASHBOARD ───
+// ─── DASHBOARD & MEAL CRUD ───
+async function loadAttendanceAvg(){
+  const tb=document.getElementById('att-avg-table');
+  try{
+    const rows=await get('/attendance/avg');
+    if(rows.error)return toast('Error: '+rows.error,true);
+    if(!Array.isArray(rows)||!rows.length){
+      tb.innerHTML='<tr><td colspan="5" class="empty">No attendance data yet.</td></tr>';
+      return;
+    }
+    tb.innerHTML=rows.map(r=>`<tr>
+      <td>${mealChip(r.meal_type)}</td>
+      <td>${r.total_records}</td>
+      <td style="font-weight:500;color:var(--tx)">${r.avg_students}</td>
+      <td>${r.min_students}</td>
+      <td>${r.max_students}</td>
+    </tr>`).join('');
+  }catch(e){toast('Failed to load attendance averages',true)}
+}
+
 async function loadDashboard(){
   try{
     const s=await get('/wastage/stats');
@@ -756,18 +1012,69 @@ async function loadDashboard(){
     const meals=await get('/meals');
     const tb=document.getElementById('dash-table');
     if(meals.error)return toast('Error: '+meals.error,true);
-    if(!Array.isArray(meals)||!meals.length){tb.innerHTML='<tr><td colspan="8" class="empty">No data yet. Add a meal first.</td></tr>';return}
-    tb.innerHTML=meals.slice(0,10).map(m=>`<tr>
-      <td><span class="id-tag">#${m.meal_id}</span></td>
-      <td style="color:var(--tx3)">${m.meal_date||'—'}</td>
-      <td>${mealChip(m.meal_type)}</td>
-      <td>${m.students_present||0}</td>
-      <td>${m.prepared_kg||0}</td>
-      <td>${m.consumed_kg||0}</td>
-      <td style="font-weight:500">${m.wastage_kg||0}</td>
-      <td>${wastageBar(m.wastage_percent||0)}</td>
-    </tr>`).join('');
+    if(!Array.isArray(meals)||!meals.length){
+      tb.innerHTML='<tr><td colspan="9" class="empty">No data yet. Add a meal first.</td></tr>';
+    }else{
+      meals.forEach(m=>mealsById.set(m.meal_id,m));
+      tb.innerHTML=meals.slice(0,10).map(mealRowHtml).join('');
+    }
+    await loadAttendanceAvg();
   }catch(e){console.error(e);toast('Failed to load dashboard',true)}
+}
+
+function openEditMealModal(mealId){
+  const m=mealsById.get(mealId);
+  if(!m)return toast('Meal not found in current view',true);
+  document.getElementById('em-id').value=m.meal_id;
+  document.getElementById('em-id-tag').textContent='#'+m.meal_id;
+  document.getElementById('em-date').value=m.meal_date||'';
+  document.getElementById('em-type').value=m.meal_type||'Breakfast';
+  document.getElementById('em-students').value=m.students_present??'';
+  document.getElementById('em-prep').value=Number(m.prepared_kg)>0?m.prepared_kg:'';
+  document.getElementById('em-cons').value=m.consumed_kg??'';
+  openModal('edit-meal-modal');
+}
+
+async function saveMealEdit(){
+  const mealId=parseInt(document.getElementById('em-id').value,10);
+  const meal_date=document.getElementById('em-date').value;
+  const meal_type=document.getElementById('em-type').value;
+  const studentsVal=document.getElementById('em-students').value;
+  const prepVal=document.getElementById('em-prep').value;
+  const consVal=document.getElementById('em-cons').value;
+  if(!meal_date||!meal_type)return toast('Date and meal type are required',true);
+  try{
+    const r=await put('/meals/'+mealId,{meal_date,meal_type});
+    if(r.error)return toast('Error: '+r.error,true);
+    if(studentsVal!==''){
+      const ar=await post('/attendance',{meal_id:mealId,students_present:parseInt(studentsVal,10)});
+      if(ar.error)return toast('Meal saved, attendance error: '+ar.error,true);
+    }
+    if(prepVal!==''){
+      const pr=await post('/food/prepared',{meal_id:mealId,quantity_prepared_kg:parseFloat(prepVal)});
+      if(pr.error)return toast('Meal saved, prepared error: '+pr.error,true);
+    }
+    if(consVal!==''){
+      const cr=await post('/food/consumed',{meal_id:mealId,quantity_consumed_kg:parseFloat(consVal)});
+      if(cr.error)return toast('Meal saved, consumed error: '+cr.error,true);
+    }
+    closeModal('edit-meal-modal');
+    toast('Meal #'+mealId+' updated');
+    loadDashboard();
+    loadAllMeals();
+  }catch(err){toast('Failed to update meal',true)}
+}
+
+async function deleteMeal(mealId){
+  if(!confirm(`Delete Meal #${mealId} and its attendance/food/wastage logs?`))return;
+  try{
+    const r=await del('/meals/'+mealId);
+    if(r.error)return toast('Error: '+r.error,true);
+    mealsById.delete(mealId);
+    toast('Meal #'+mealId+' deleted');
+    loadDashboard();
+    loadAllMeals();
+  }catch(err){toast('Failed to delete meal',true)}
 }
 
 // ─── ENTRY ACTIONS ───
@@ -790,17 +1097,9 @@ async function loadAllMeals(){
     const meals=await get('/meals');
     if(meals.error)return toast('Error: '+meals.error,true);
     const tb=document.getElementById('all-meals-table');
-    if(!Array.isArray(meals)||!meals.length){tb.innerHTML='<tr><td colspan="8" class="empty">No meals yet.</td></tr>';return}
-    tb.innerHTML=meals.map(m=>`<tr>
-      <td><span class="id-tag">#${m.meal_id}</span></td>
-      <td style="color:var(--tx3)">${m.meal_date||'—'}</td>
-      <td>${mealChip(m.meal_type)}</td>
-      <td>${m.students_present||0}</td>
-      <td>${m.prepared_kg||0}</td>
-      <td>${m.consumed_kg||0}</td>
-      <td style="font-weight:500">${m.wastage_kg||0}</td>
-      <td>${wastageBar(m.wastage_percent||0)}</td>
-    </tr>`).join('');
+    if(!Array.isArray(meals)||!meals.length){tb.innerHTML='<tr><td colspan="9" class="empty">No meals yet.</td></tr>';return}
+    meals.forEach(m=>mealsById.set(m.meal_id,m));
+    tb.innerHTML=meals.map(mealRowHtml).join('');
   }catch(err){toast('Failed to load meals',true)}
 }
 
@@ -847,16 +1146,28 @@ async function addConsumedAndFinish(){
 }
 
 // ─── WASTAGE ───
+function setWastageView(mode){
+  const views={full:'wastage-full',summary:'wastage-summary',report:'wastage-report',trend:'wastage-trend'};
+  const btns={full:'wb-full',summary:'wb-summary',report:'wb-report',trend:'wb-trend'};
+  Object.entries(views).forEach(([k,id])=>{
+    document.getElementById(id).style.display=k===mode?'block':'none';
+  });
+  Object.entries(btns).forEach(([k,id])=>{
+    const el=document.getElementById(id);
+    el.classList.toggle('btn-g',k===mode);
+    el.classList.toggle('btn-ghost',k!==mode);
+  });
+}
+
 async function loadWastage(){
-  document.getElementById('wastage-full').style.display='block';
-  document.getElementById('wastage-summary').style.display='none';
+  setWastageView('full');
   try{
     const data=await get('/wastage');
     if(data.error)return toast('Error: '+data.error,true);
     const tb=document.getElementById('wastage-table');
     if(!Array.isArray(data)||!data.length){tb.innerHTML='<tr><td colspan="7" class="empty">No wastage data yet.</td></tr>';return}
     tb.innerHTML=data.map(r=>`<tr>
-      <td style="color:var(--tx3)">${r.meal_date||'—'}</td>
+      <td style="color:var(--tx3)">${esc(r.meal_date||'—')}</td>
       <td>${mealChip(r.meal_type)}</td>
       <td>${r.students_present||0}</td>
       <td>${r.prepared_kg||0}</td>
@@ -868,8 +1179,7 @@ async function loadWastage(){
 }
 
 async function loadSummary(){
-  document.getElementById('wastage-full').style.display='none';
-  document.getElementById('wastage-summary').style.display='block';
+  setWastageView('summary');
   try{
     const data=await get('/wastage/summary');
     if(data.error)return toast('Error: '+data.error,true);
@@ -889,24 +1199,114 @@ async function loadSummary(){
   }catch(err){toast('Failed to load summary',true)}
 }
 
+function showDateReport(){
+  setWastageView('report');
+}
+
+async function runDateReport(){
+  const start_date=document.getElementById('rep-start').value;
+  const end_date=document.getElementById('rep-end').value;
+  if(!start_date||!end_date)return toast('Select both start and end dates',true);
+  try{
+    const res=await post('/wastage/report',{start_date,end_date});
+    if(res.error)return toast('Error: '+res.error,true);
+    document.getElementById('rep-range-badge').textContent=`${start_date} → ${end_date}`;
+    const sumTb=document.getElementById('rep-summary-table');
+    const detTb=document.getElementById('rep-detail-table');
+    sumTb.innerHTML=(res.summary&&res.summary.length)
+      ?res.summary.map(r=>`<tr>
+          <td>${mealChip(r.meal_type)}</td>
+          <td>${r.total_meals}</td>
+          <td>${r.total_prepared_kg}</td>
+          <td>${r.total_consumed_kg}</td>
+          <td style="font-weight:500;color:var(--tx)">${r.total_wasted_kg}</td>
+          <td>${r.avg_wastage_kg}</td>
+        </tr>`).join('')
+      :'<tr><td colspan="6" class="empty">No summary rows in this date range.</td></tr>';
+    detTb.innerHTML=(res.detail&&res.detail.length)
+      ?res.detail.map(r=>`<tr>
+          <td><span class="id-tag">#${r.meal_id}</span></td>
+          <td style="color:var(--tx3)">${esc(r.meal_date||'—')}</td>
+          <td>${mealChip(r.meal_type)}</td>
+          <td>${r.students_present||0}</td>
+          <td>${r.prepared_kg||0}</td>
+          <td>${r.consumed_kg||0}</td>
+          <td style="font-weight:500">${r.wastage_kg||0}</td>
+          <td>${wastageBar(r.wastage_percent||0)}</td>
+        </tr>`).join('')
+      :'<tr><td colspan="8" class="empty">No meals logged in this date range.</td></tr>';
+    document.getElementById('rep-results').style.display='block';
+  }catch(err){toast('Failed to run date-range report',true)}
+}
+
+async function loadTrend(){
+  setWastageView('trend');
+  try{
+    const rows=await get('/wastage/trend');
+    if(rows.error)return toast('Error: '+rows.error,true);
+    const chart=document.getElementById('trend-chart');
+    const tb=document.getElementById('trend-table');
+    if(!Array.isArray(rows)||!rows.length){
+      chart.innerHTML='';
+      tb.innerHTML='<tr><td colspan="2" class="empty">No trend data yet.</td></tr>';
+      return;
+    }
+    const maxVal=Math.max(...rows.map(r=>parseFloat(r.total_wastage_kg)||0),1);
+    chart.innerHTML=rows.map(r=>{
+      const val=parseFloat(r.total_wastage_kg)||0;
+      const pct=Math.round((val/maxVal)*100);
+      return`<div class="trend-row">
+        <span style="color:var(--tx3);font-size:12.5px">${esc(r.meal_date)}</span>
+        <div class="trend-track"><div class="trend-fill" style="width:${pct}%"></div></div>
+        <span style="text-align:right;font-weight:500;color:var(--tx)">${val.toFixed(2)} kg</span>
+      </div>`;
+    }).join('');
+    tb.innerHTML=rows.map(r=>`<tr>
+      <td style="color:var(--tx3)">${esc(r.meal_date)}</td>
+      <td style="font-weight:500;color:var(--tx)">${r.total_wastage_kg}</td>
+    </tr>`).join('');
+  }catch(err){toast('Failed to load daily trend',true)}
+}
+
 // ─── PREDICTIONS ───
 async function autoPredict(){
   try{
     const data=await get('/predictions/auto');
     if(data.error)return toast('Error: '+data.error,true);
     if(!data.predictions||!data.predictions.length)return toast(data.message||'Not enough data. Complete at least one full meal entry.',true);
+    lastAutoPredictions=data.predictions;
     const tb=document.getElementById('pred-table');
-    tb.innerHTML=data.predictions.map(p=>`<tr>
+    tb.innerHTML=data.predictions.map((p,idx)=>`<tr>
       <td>${mealChip(p.meal_type)}</td>
       <td>${p.predicted_students}</td>
       <td>${p.standard_estimate_kg}</td>
       <td>${p.historical_avg_kg}</td>
       <td><span style="color:var(--green);font-weight:600;font-size:14px">${p.suggested_quantity_kg} kg</span></td>
       <td>${p.avg_wastage_kg}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="saveAutoPrediction(${idx})">Save</button></td>
     </tr>`).join('');
     document.getElementById('pred-result').style.display='block';
     toast('Prediction generated from historical data');
   }catch(err){toast('Failed to generate prediction',true)}
+}
+
+async function saveAutoPrediction(idx){
+  const p=lastAutoPredictions[idx];
+  const prediction_date=document.getElementById('auto-pred-date').value;
+  if(!p||!prediction_date)return toast('Select a target date first',true);
+  try{
+    const r=await post('/predictions',{
+      prediction_date,
+      meal_type:p.meal_type,
+      predicted_students:parseInt(p.predicted_students,10),
+      standard_estimate_kg:parseFloat(p.standard_estimate_kg),
+      historical_avg_kg:parseFloat(p.historical_avg_kg),
+      suggested_quantity_kg:parseFloat(p.suggested_quantity_kg)
+    });
+    if(r.error)return toast('Error: '+r.error,true);
+    toast(`Saved ${p.meal_type} prediction for ${prediction_date}`);
+    loadSavedPredictions();
+  }catch(err){toast('Failed to save prediction',true)}
 }
 
 async function savePrediction(){
@@ -923,7 +1323,107 @@ async function savePrediction(){
     const r=await post('/predictions',d);
     if(r.error)return toast('Error: '+r.error,true);
     toast('Prediction saved');
+    loadSavedPredictions();
   }catch(err){toast('Failed to save prediction',true)}
+}
+
+async function loadSavedPredictions(){
+  const tb=document.getElementById('saved-pred-table');
+  try{
+    const rows=await get('/predictions');
+    if(rows.error)return toast('Error: '+rows.error,true);
+    if(!Array.isArray(rows)||!rows.length){
+      tb.innerHTML='<tr><td colspan="8" class="empty">No saved predictions yet.</td></tr>';
+      return;
+    }
+    savedPredictionsById.clear();
+    rows.forEach(p=>savedPredictionsById.set(p.prediction_id,p));
+    tb.innerHTML=rows.map(p=>`<tr>
+      <td><span class="id-tag">#${p.prediction_id}</span></td>
+      <td style="color:var(--tx3)">${esc(p.prediction_date||'—')}</td>
+      <td>${mealChip(p.meal_type)}</td>
+      <td>${p.predicted_students}</td>
+      <td>${p.standard_estimate_kg??0}</td>
+      <td>${p.historical_avg_kg??0}</td>
+      <td><span style="color:var(--green);font-weight:600">${p.suggested_quantity_kg} kg</span></td>
+      <td>
+        <div class="act-wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openEditPredModal(${p.prediction_id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePrediction(${p.prediction_id})">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+  }catch(err){toast('Failed to load saved predictions',true)}
+}
+
+function openEditPredModal(predId){
+  const p=savedPredictionsById.get(predId);
+  if(!p)return toast('Prediction not found',true);
+  document.getElementById('ep-id').value=p.prediction_id;
+  document.getElementById('ep-id-tag').textContent='#'+p.prediction_id;
+  document.getElementById('ep-date').value=p.prediction_date||'';
+  document.getElementById('ep-type').value=p.meal_type||'Breakfast';
+  document.getElementById('ep-students').value=p.predicted_students??0;
+  document.getElementById('ep-qty').value=p.suggested_quantity_kg??0;
+  openModal('edit-pred-modal');
+}
+
+async function savePredEdit(){
+  const predId=parseInt(document.getElementById('ep-id').value,10);
+  const existing=savedPredictionsById.get(predId)||{};
+  const payload={
+    prediction_date:document.getElementById('ep-date').value,
+    meal_type:document.getElementById('ep-type').value,
+    predicted_students:parseInt(document.getElementById('ep-students').value,10),
+    standard_estimate_kg:parseFloat(existing.standard_estimate_kg??0),
+    historical_avg_kg:parseFloat(existing.historical_avg_kg??0),
+    suggested_quantity_kg:parseFloat(document.getElementById('ep-qty').value)
+  };
+  if(!payload.prediction_date||!payload.meal_type||Number.isNaN(payload.predicted_students)||Number.isNaN(payload.suggested_quantity_kg)){
+    return toast('Fill all fields',true);
+  }
+  try{
+    const r=await put('/predictions/'+predId,payload);
+    if(r.error)return toast('Error: '+r.error,true);
+    closeModal('edit-pred-modal');
+    toast('Prediction #'+predId+' updated');
+    loadSavedPredictions();
+  }catch(err){toast('Failed to update prediction',true)}
+}
+
+async function deletePrediction(predId){
+  if(!confirm(`Delete Prediction #${predId}?`))return;
+  try{
+    const r=await del('/predictions/'+predId);
+    if(r.error)return toast('Error: '+r.error,true);
+    savedPredictionsById.delete(predId);
+    toast('Prediction #'+predId+' deleted');
+    loadSavedPredictions();
+  }catch(err){toast('Failed to delete prediction',true)}
+}
+
+// ─── AUDIT LOG ───
+async function loadAudit(){
+  const tb=document.getElementById('audit-table');
+  try{
+    const rows=await get('/wastage/audit');
+    if(rows.error)return toast('Error: '+rows.error,true);
+    if(!Array.isArray(rows)||!rows.length){
+      tb.innerHTML='<tr><td colspan="6" class="empty">No audit records yet.</td></tr>';
+      return;
+    }
+    tb.innerHTML=rows.map(r=>{
+      const badgeClass=r.action==='INSERT'?'b-green':r.action==='UPDATE'?'b-amber':'b-red';
+      return`<tr>
+        <td><span class="id-tag">#${r.audit_id}</span></td>
+        <td>${esc(r.table_name)}</td>
+        <td><span class="badge ${badgeClass}">${esc(r.action)}</span></td>
+        <td>#${r.record_id}</td>
+        <td style="color:var(--tx3)">${esc(r.changed_by)}</td>
+        <td style="color:var(--tx3)">${esc(r.changed_at)}</td>
+      </tr>`;
+    }).join('');
+  }catch(err){toast('Failed to load audit log',true)}
 }
 
 document.addEventListener('DOMContentLoaded',loadDashboard);
