@@ -1,38 +1,38 @@
 const express = require('express');
-const router  = express.Router();
-const db      = require('../db/connection');
+const router = express.Router();
+const db = require('../db/connection');
+const { parseIntInRange, ensureMealExists } = require('../utils/validators');
 
 router.post('/', async (req, res) => {
     try {
-        const { students_present, meal_id } = req.body;
-
-        if (meal_id === undefined || students_present === undefined) {
-            return res.status(400).json({ error: 'students_present and meal_id are required' });
+        const mealId = parseIntInRange(req.body.meal_id, { min: 1 });
+        if (mealId === null) {
+            return res.status(400).json({ error: 'meal_id must be a positive integer' });
         }
 
-        if (parseInt(students_present) < 0) {
-            return res.status(400).json({ error: 'students_present cannot be negative' });
+        const studentsPresent = parseIntInRange(req.body.students_present, { min: 0 });
+        if (studentsPresent === null) {
+            return res.status(400).json({ error: 'students_present must be a non-negative integer' });
         }
 
-        const [mealCheck] = await db.execute(
-            'SELECT meal_id FROM Meal WHERE meal_id = ?',
-            [meal_id]
-        );
-
-        if (mealCheck.length === 0) {
-            return res.status(404).json({ error: `Meal with ID ${meal_id} not found` });
+        if (!(await ensureMealExists(db, mealId))) {
+            return res.status(404).json({ error: `Meal with ID ${mealId} not found` });
         }
 
         const [result] = await db.execute(
-            'INSERT INTO Attendance (students_present, meal_id) VALUES (?, ?)',
-            [students_present, meal_id]
+            `INSERT INTO Attendance (meal_id, students_present)
+             VALUES (?, ?)
+             ON DUPLICATE KEY UPDATE
+                 students_present = VALUES(students_present),
+                 attendance_id    = LAST_INSERT_ID(attendance_id)`,
+            [mealId, studentsPresent]
         );
 
-        res.json({
-            message: 'Attendance recorded',
+        const updated = result.affectedRows === 2;
+        res.status(updated ? 200 : 201).json({
+            message: updated ? 'Attendance updated' : 'Attendance recorded',
             attendance_id: result.insertId
         });
-
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

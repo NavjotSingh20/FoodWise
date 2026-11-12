@@ -179,23 +179,23 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
 
   <nav class="nav">
     <div class="nav-label">Overview</div>
-    <button class="nav-item on" onclick="showTab('dashboard',this)">
+    <button class="nav-item on" data-tab="dashboard" onclick="showTab('dashboard',this)">
       <span class="ni"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg></span>
       Dashboard
     </button>
 
     <div class="nav-label">Data Entry</div>
-    <button class="nav-item" onclick="showTab('entry',this)">
+    <button class="nav-item" data-tab="entry" onclick="showTab('entry',this)">
       <span class="ni"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg></span>
       Add &amp; Log
     </button>
 
     <div class="nav-label">Analytics</div>
-    <button class="nav-item" onclick="showTab('wastage',this)">
+    <button class="nav-item" data-tab="wastage" onclick="showTab('wastage',this)">
       <span class="ni"><svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg></span>
       Wastage Report
     </button>
-    <button class="nav-item" onclick="showTab('predictions',this)">
+    <button class="nav-item" data-tab="predictions" onclick="showTab('predictions',this)">
       <span class="ni"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg></span>
       Predictions
     </button>
@@ -459,7 +459,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
             <div class="card-body">
               <div class="alert al-green">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14l-4-4 1.41-1.41L10 13.17l6.59-6.59L18 8l-8 8z"/></svg>
-                <span>Saving consumed data fires the <code style="background:rgba(34,197,94,0.15);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11.5px">after_consumed_insert</code> trigger — wastage is auto-calculated and written to <code style="background:rgba(34,197,94,0.15);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11.5px">Wastage_Log</code>.</span>
+                <span>Saving consumed data fires the <code style="background:rgba(34,197,94,0.15);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11.5px">trg_calculate_wastage</code> trigger — wastage is auto-calculated and written to <code style="background:rgba(34,197,94,0.15);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11.5px">Wastage_Log</code>.</span>
               </div>
               <div class="fgrid">
                 <div class="fg"><label class="fl">Meal ID</label><input class="fi" type="number" id="cons-meal-id" placeholder="e.g. 1" min="1"/></div>
@@ -520,7 +520,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.03);color:var(--tx)}
           <div class="tw">
             <table>
               <thead><tr><th>Date</th><th>Meal</th><th>Students</th><th>Prepared kg</th><th>Consumed kg</th><th>Wasted kg</th><th>Wastage %</th></tr></thead>
-              <tbody id="wastage-table"><tr><td colspan="8" class="empty">Click "Full Report" to load</td></tr></tbody>
+              <tbody id="wastage-table"><tr><td colspan="7" class="empty">Click "Full Report" to load</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -638,8 +638,13 @@ const META={
 };
 
 const today=new Date();
+const localDateStr=[
+  today.getFullYear(),
+  String(today.getMonth()+1).padStart(2,'0'),
+  String(today.getDate()).padStart(2,'0')
+].join('-');
 document.getElementById('datechip').textContent=today.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-document.querySelectorAll('input[type="date"]').forEach(e=>e.value=today.toISOString().split('T')[0]);
+document.querySelectorAll('input[type="date"]').forEach(e=>e.value=localDateStr);
 
 // ─── NAV ───
 function openSidebar(){document.getElementById('sb').classList.add('open');document.getElementById('ov').classList.add('open')}
@@ -648,7 +653,8 @@ function showTab(name,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('on'));
   document.getElementById('p-'+name).classList.add('on');
-  if(btn)btn.classList.add('on');
+  const activeBtn=btn||document.querySelector(`.nav-item[data-tab="${name}"]`);
+  if(activeBtn)activeBtn.classList.add('on');
   const m=META[name];
   if(m){document.getElementById('pt').textContent=m.t;document.getElementById('pc').textContent=m.c}
   closeSidebar();
@@ -665,11 +671,17 @@ function toast(msg,err=false){
 }
 
 // ─── HTTP ───
-async function post(url,data){
-  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  return r.json();
+async function requestJson(url,options){
+  const r=await fetch(url,options);
+  let body;
+  try{body=await r.json();}catch{body={error:`Server returned ${r.status}`};}
+  if(!r.ok&&!body.error){body.error=`Request failed (${r.status})`;}
+  return body;
 }
-async function get(url){return(await fetch(url)).json()}
+async function post(url,data){
+  return requestJson(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+}
+async function get(url){return requestJson(url);}
 
 // ─── UTILS ───
 function mealChip(type){
@@ -736,13 +748,15 @@ function switchEtab(tab){
 async function loadDashboard(){
   try{
     const s=await get('/wastage/stats');
+    if(s.error)return toast('Error: '+s.error,true);
     document.getElementById('stat-meals').textContent=s.total_meals_logged??'0';
     document.getElementById('stat-waste').textContent=s.total_wasted_kg??'0';
     document.getElementById('stat-avg').textContent=parseFloat(s.avg_waste_per_student_kg||0).toFixed(3);
-    document.getElementById('stat-entries').textContent=s.total_meals_logged??'0';
+    document.getElementById('stat-entries').textContent=s.total_wastage_entries??s.total_meals_logged??'0';
     const meals=await get('/meals');
     const tb=document.getElementById('dash-table');
-    if(!meals.length){tb.innerHTML='<tr><td colspan="8" class="empty">No data yet. Add a meal first.</td></tr>';return}
+    if(meals.error)return toast('Error: '+meals.error,true);
+    if(!Array.isArray(meals)||!meals.length){tb.innerHTML='<tr><td colspan="8" class="empty">No data yet. Add a meal first.</td></tr>';return}
     tb.innerHTML=meals.slice(0,10).map(m=>`<tr>
       <td><span class="id-tag">#${m.meal_id}</span></td>
       <td style="color:var(--tx3)">${m.meal_date||'—'}</td>
@@ -753,17 +767,16 @@ async function loadDashboard(){
       <td style="font-weight:500">${m.wastage_kg||0}</td>
       <td>${wastageBar(m.wastage_percent||0)}</td>
     </tr>`).join('');
-  }catch(e){console.error(e)}
+  }catch(e){console.error(e);toast('Failed to load dashboard',true)}
 }
 
 // ─── ENTRY ACTIONS ───
 async function addMealAndNext(){
   const meal_date=document.getElementById('meal-date').value;
-  const type=document.getElementById('meal-type').value;
-  if(!meal_date||!type)return toast('Fill in date and type',true);
+  const meal_type=document.getElementById('meal-type').value;
+  if(!meal_date||!meal_type)return toast('Fill in date and type',true);
   try{
-    const r=await fetch('/meals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({meal_date,type})});
-    const result=await r.json();
+    const result=await post('/meals',{meal_date,meal_type});
     if(result.error)return toast('Error: '+result.error,true);
     currentMealId=result.meal_id;
     toast('Meal created — ID: '+currentMealId);
@@ -773,127 +786,144 @@ async function addMealAndNext(){
 }
 
 async function loadAllMeals(){
-  const meals=await get('/meals');
-  const tb=document.getElementById('all-meals-table');
-  if(!meals.length){tb.innerHTML='<tr><td colspan="8" class="empty">No meals yet.</td></tr>';return}
-  tb.innerHTML=meals.map(m=>`<tr>
-    <td><span class="id-tag">#${m.meal_id}</span></td>
-    <td style="color:var(--tx3)">${m.meal_date||'—'}</td>
-    <td>${mealChip(m.meal_type)}</td>
-    <td>${m.students_present||0}</td>
-    <td>${m.prepared_kg||0}</td>
-    <td>${m.consumed_kg||0}</td>
-    <td style="font-weight:500">${m.wastage_kg||0}</td>
-    <td>${wastageBar(m.wastage_percent||0)}</td>
-  </tr>`).join('');
+  try{
+    const meals=await get('/meals');
+    if(meals.error)return toast('Error: '+meals.error,true);
+    const tb=document.getElementById('all-meals-table');
+    if(!Array.isArray(meals)||!meals.length){tb.innerHTML='<tr><td colspan="8" class="empty">No meals yet.</td></tr>';return}
+    tb.innerHTML=meals.map(m=>`<tr>
+      <td><span class="id-tag">#${m.meal_id}</span></td>
+      <td style="color:var(--tx3)">${m.meal_date||'—'}</td>
+      <td>${mealChip(m.meal_type)}</td>
+      <td>${m.students_present||0}</td>
+      <td>${m.prepared_kg||0}</td>
+      <td>${m.consumed_kg||0}</td>
+      <td style="font-weight:500">${m.wastage_kg||0}</td>
+      <td>${wastageBar(m.wastage_percent||0)}</td>
+    </tr>`).join('');
+  }catch(err){toast('Failed to load meals',true)}
 }
 
 async function addAttendanceAndNext(){
   const meal_id=document.getElementById('att-meal-id').value;
   const students_present=document.getElementById('att-students').value;
-  if(!meal_id||!students_present)return toast('Fill all fields',true);
-  const r=await post('/attendance',{meal_id:parseInt(meal_id),students_present:parseInt(students_present)});
-  if(r.error)return toast('Error: '+r.error,true);
-  toast('Attendance recorded');
-  if(!currentMealId)currentMealId=parseInt(meal_id);
-  goStep(3);
+  if(!meal_id||students_present==='')return toast('Fill all fields',true);
+  try{
+    const r=await post('/attendance',{meal_id:parseInt(meal_id,10),students_present:parseInt(students_present,10)});
+    if(r.error)return toast('Error: '+r.error,true);
+    toast(r.message||'Attendance recorded');
+    if(!currentMealId)currentMealId=parseInt(meal_id,10);
+    goStep(3);
+  }catch(err){toast('Server error',true)}
 }
 
 async function addPreparedAndSwitch(){
   const meal_id=document.getElementById('prep-meal-id').value;
   const quantity_prepared_kg=document.getElementById('prep-qty').value;
-  if(!meal_id||!quantity_prepared_kg)return toast('Fill all fields',true);
-  const r=await post('/food/prepared',{meal_id:parseInt(meal_id),quantity_prepared_kg:parseFloat(quantity_prepared_kg)});
-  if(r.error)return toast('Error: '+r.error,true);
-  toast('Food prepared saved');
-  document.getElementById('cons-meal-id').value=meal_id;
-  switchEtab('cons');
+  if(!meal_id||quantity_prepared_kg==='')return toast('Fill all fields',true);
+  try{
+    const r=await post('/food/prepared',{meal_id:parseInt(meal_id,10),quantity_prepared_kg:parseFloat(quantity_prepared_kg)});
+    if(r.error)return toast('Error: '+r.error,true);
+    toast(r.message||'Food prepared saved');
+    document.getElementById('cons-meal-id').value=meal_id;
+    switchEtab('cons');
+  }catch(err){toast('Server error',true)}
 }
 
 async function addConsumedAndFinish(){
   const meal_id=document.getElementById('cons-meal-id').value;
   const quantity_consumed_kg=document.getElementById('cons-qty').value;
-  if(!meal_id||!quantity_consumed_kg)return toast('Fill all fields',true);
-  const r=await post('/food/consumed',{meal_id:parseInt(meal_id),quantity_consumed_kg:parseFloat(quantity_consumed_kg)});
-  if(r.error)return toast('Error: '+r.error,true);
-  // Show completion
-  document.getElementById('done-mid').textContent=meal_id;
-  const wasted=r.auto_wastage_kg??'—';
-  document.getElementById('done-detail').textContent=
-    `Wastage auto-calculated: ${wasted} kg. Trigger fired → Wastage_Log updated.`;
-  goStep(4);
-  toast('All data saved. Trigger calculated wastage: '+wasted+' kg');
+  if(!meal_id||quantity_consumed_kg==='')return toast('Fill all fields',true);
+  try{
+    const r=await post('/food/consumed',{meal_id:parseInt(meal_id,10),quantity_consumed_kg:parseFloat(quantity_consumed_kg)});
+    if(r.error)return toast('Error: '+r.error,true);
+    document.getElementById('done-mid').textContent=meal_id;
+    const wasted=r.auto_wastage_kg??'—';
+    document.getElementById('done-detail').textContent=
+      `Wastage auto-calculated: ${wasted} kg. Trigger fired → Wastage_Log updated.`;
+    goStep(4);
+    toast('All data saved. Trigger calculated wastage: '+wasted+' kg');
+  }catch(err){toast('Server error',true)}
 }
 
 // ─── WASTAGE ───
 async function loadWastage(){
   document.getElementById('wastage-full').style.display='block';
   document.getElementById('wastage-summary').style.display='none';
-  const data=await get('/wastage');
-  const tb=document.getElementById('wastage-table');
-  if(!data.length){tb.innerHTML='<tr><td colspan="8" class="empty">No wastage data yet.</td></tr>';return}
-  tb.innerHTML=data.map(r=>`<tr>
-    <td style="color:var(--tx3)">${r.meal_date||'—'}</td>
-    <td>${mealChip(r.meal_type)}</td>
-    <td>${r.students_present||0}</td>
-    <td>${r.prepared_kg||0}</td>
-    <td>${r.consumed_kg||0}</td>
-    <td style="font-weight:500;color:var(--tx)">${r.wastage_kg||0}</td>
-    <td>${wastageBar(r.wastage_percent||0)}</td>
-  </tr>`).join('');
+  try{
+    const data=await get('/wastage');
+    if(data.error)return toast('Error: '+data.error,true);
+    const tb=document.getElementById('wastage-table');
+    if(!Array.isArray(data)||!data.length){tb.innerHTML='<tr><td colspan="7" class="empty">No wastage data yet.</td></tr>';return}
+    tb.innerHTML=data.map(r=>`<tr>
+      <td style="color:var(--tx3)">${r.meal_date||'—'}</td>
+      <td>${mealChip(r.meal_type)}</td>
+      <td>${r.students_present||0}</td>
+      <td>${r.prepared_kg||0}</td>
+      <td>${r.consumed_kg||0}</td>
+      <td style="font-weight:500;color:var(--tx)">${r.wastage_kg||0}</td>
+      <td>${wastageBar(r.wastage_percent||0)}</td>
+    </tr>`).join('');
+  }catch(err){toast('Failed to load wastage report',true)}
 }
 
 async function loadSummary(){
   document.getElementById('wastage-full').style.display='none';
   document.getElementById('wastage-summary').style.display='block';
-
-  const data = await get('/wastage/summary');
-  const tb = document.getElementById('summary-table');
-
-  if(!data.length){
-    tb.innerHTML = '<tr><td colspan="6" class="empty">No data yet.</td></tr>';
-    return;
-  }
-
-  tb.innerHTML = data.map(r => `<tr>
-    <td>${mealChip(r.meal_type)}</td>
-    <td>${r.total_meals}</td>
-    <td>${r.avg_wastage_kg}</td>
-    <td style="font-weight:500;color:var(--tx)">${r.total_wasted_kg}</td>
-    <td>${r.max_wastage_kg}</td>
-    <td>${r.avg_students}</td>
-  </tr>`).join('');
+  try{
+    const data=await get('/wastage/summary');
+    if(data.error)return toast('Error: '+data.error,true);
+    const tb=document.getElementById('summary-table');
+    if(!Array.isArray(data)||!data.length){
+      tb.innerHTML='<tr><td colspan="6" class="empty">No data yet.</td></tr>';
+      return;
+    }
+    tb.innerHTML=data.map(r=>`<tr>
+      <td>${mealChip(r.meal_type)}</td>
+      <td>${r.total_meals}</td>
+      <td>${r.avg_wastage_kg}</td>
+      <td style="font-weight:500;color:var(--tx)">${r.total_wasted_kg}</td>
+      <td>${r.max_wastage_kg}</td>
+      <td>${r.avg_students}</td>
+    </tr>`).join('');
+  }catch(err){toast('Failed to load summary',true)}
 }
 
 // ─── PREDICTIONS ───
 async function autoPredict(){
-  const data=await get('/predictions/auto');
-  if(data.error)return toast('Error: '+data.error,true);
-  if(!data.predictions||!data.predictions.length)return toast(data.message||'Not enough data. Complete at least one full meal entry.',true);
-  const tb=document.getElementById('pred-table');
-  tb.innerHTML=data.predictions.map(p=>`<tr>
-    <td>${mealChip(p.meal_type)}</td>
-    <td>${p.predicted_students}</td>
-    <td>${p.standard_estimate_kg}</td>
-    <td>${p.historical_avg_kg}</td>
-    <td><span style="color:var(--green);font-weight:600;font-size:14px">${p.suggested_quantity_kg} kg</span></td>
-    <td>${p.avg_wastage_kg}</td>
-  </tr>`).join('');
-  document.getElementById('pred-result').style.display='block';
-  toast('Prediction generated from historical data');
+  try{
+    const data=await get('/predictions/auto');
+    if(data.error)return toast('Error: '+data.error,true);
+    if(!data.predictions||!data.predictions.length)return toast(data.message||'Not enough data. Complete at least one full meal entry.',true);
+    const tb=document.getElementById('pred-table');
+    tb.innerHTML=data.predictions.map(p=>`<tr>
+      <td>${mealChip(p.meal_type)}</td>
+      <td>${p.predicted_students}</td>
+      <td>${p.standard_estimate_kg}</td>
+      <td>${p.historical_avg_kg}</td>
+      <td><span style="color:var(--green);font-weight:600;font-size:14px">${p.suggested_quantity_kg} kg</span></td>
+      <td>${p.avg_wastage_kg}</td>
+    </tr>`).join('');
+    document.getElementById('pred-result').style.display='block';
+    toast('Prediction generated from historical data');
+  }catch(err){toast('Failed to generate prediction',true)}
 }
 
 async function savePrediction(){
+  const predictedStudents=parseInt(document.getElementById('pred-students').value,10);
+  const suggestedQty=parseFloat(document.getElementById('pred-qty').value);
   const d={
     prediction_date:document.getElementById('pred-date').value,
     meal_type:document.getElementById('pred-type').value,
-    predicted_students:parseInt(document.getElementById('pred-students').value),
-    suggested_quantity_kg:parseFloat(document.getElementById('pred-qty').value)
+    predicted_students:predictedStudents,
+    suggested_quantity_kg:suggestedQty
   };
-  if(!d.prediction_date||!d.meal_type||!d.predicted_students||!d.suggested_quantity_kg)return toast('Fill all fields',true);
-  const r=await post('/predictions',d);
-  if(r.error)return toast('Error: '+r.error,true);
-  toast('Prediction saved');
+  if(!d.prediction_date||!d.meal_type||Number.isNaN(predictedStudents)||Number.isNaN(suggestedQty))return toast('Fill all fields',true);
+  try{
+    const r=await post('/predictions',d);
+    if(r.error)return toast('Error: '+r.error,true);
+    toast('Prediction saved');
+  }catch(err){toast('Failed to save prediction',true)}
 }
 
 document.addEventListener('DOMContentLoaded',loadDashboard);

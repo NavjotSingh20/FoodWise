@@ -1,12 +1,12 @@
 const express = require('express');
-const router  = express.Router();
-const db      = require('../db/connection');
-
+const router = express.Router();
+const db = require('../db/connection');
+const { isValidDateString, parseIntInRange } = require('../utils/validators');
 
 router.get('/', async (req, res) => {
     try {
         const [rows] = await db.execute(`
-            SELECT 
+            SELECT
                 meal_id,
                 DATE_FORMAT(meal_date, '%Y-%m-%d') AS meal_date,
                 meal_type,
@@ -16,12 +16,12 @@ router.get('/', async (req, res) => {
                 wastage_kg,
                 wastage_percent
             FROM vw_meal_summary
-            ORDER BY meal_date DESC
+            ORDER BY meal_date DESC, meal_id DESC
         `);
 
         res.json(rows);
     } catch (err) {
-        console.error("WASTAGE FETCH ERROR:", err);
+        console.error('WASTAGE FETCH ERROR:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -29,30 +29,27 @@ router.get('/', async (req, res) => {
 router.get('/summary', async (req, res) => {
     try {
         const [rows] = await db.execute(`
-            SELECT 
+            SELECT
                 meal_type,
-                COUNT(meal_id) AS total_meals,
-                ROUND(AVG(COALESCE(wastage_kg,0)),2) AS avg_wastage_kg,
-                ROUND(SUM(COALESCE(wastage_kg,0)),2) AS total_wasted_kg,
-                ROUND(MAX(COALESCE(wastage_kg,0)),2) AS max_wastage_kg,
-                ROUND(AVG(students_present),0) AS avg_students
-            FROM vw_meal_summary
-            GROUP BY meal_type
+                total_meals,
+                avg_wastage_kg,
+                total_wasted_kg,
+                max_wastage_kg,
+                avg_students
+            FROM vw_wastage_by_type
         `);
 
         res.json(rows);
     } catch (err) {
-        console.error("SUMMARY ERROR:", err);
+        console.error('SUMMARY ERROR:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
-(DATE FIXED)
-
 router.get('/trend', async (req, res) => {
     try {
         const [rows] = await db.execute(`
-            SELECT 
+            SELECT
                 DATE_FORMAT(meal_date, '%Y-%m-%d') AS meal_date,
                 total_wastage_kg
             FROM vw_daily_trend
@@ -60,7 +57,7 @@ router.get('/trend', async (req, res) => {
 
         res.json(rows);
     } catch (err) {
-        console.error("TREND ERROR:", err);
+        console.error('TREND ERROR:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -68,16 +65,17 @@ router.get('/trend', async (req, res) => {
 router.get('/stats', async (req, res) => {
     try {
         const [[stats]] = await db.execute(`
-            SELECT 
-                COUNT(*) AS total_meals_logged,
-                ROUND(SUM(wastage_kg),2) AS total_wasted_kg,
-                ROUND(AVG(wastage_kg / NULLIF(students_present,0)),3) AS avg_waste_per_student_kg
+            SELECT
+                COUNT(*)                                                     AS total_meals_logged,
+                COALESCE(ROUND(SUM(wastage_kg), 2), 0)                       AS total_wasted_kg,
+                COALESCE(ROUND(AVG(wastage_kg / NULLIF(students_present, 0)), 3), 0) AS avg_waste_per_student_kg,
+                (SELECT COUNT(*) FROM Wastage_Log)                           AS total_wastage_entries
             FROM vw_meal_summary
         `);
 
         res.json(stats);
     } catch (err) {
-        console.error("STATS ERROR:", err);
+        console.error('STATS ERROR:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -87,23 +85,37 @@ router.post('/report', async (req, res) => {
         const { start_date, end_date, hostel_id = 0 } = req.body;
 
         if (!start_date || !end_date) {
+            return res.status(400).json({ error: 'start_date and end_date are required' });
+        }
+
+        if (!isValidDateString(start_date) || !isValidDateString(end_date)) {
             return res.status(400).json({
-                error: 'start_date and end_date required'
+                error: 'start_date and end_date must be valid YYYY-MM-DD dates'
             });
+        }
+
+        if (start_date > end_date) {
+            return res.status(400).json({
+                error: 'start_date must be on or before end_date'
+            });
+        }
+
+        const parsedHostelId = parseIntInRange(hostel_id, { min: 0 });
+        if (parsedHostelId === null) {
+            return res.status(400).json({ error: 'hostel_id must be a non-negative integer' });
         }
 
         const [rows] = await db.execute(
             'CALL sp_wastage_report(?, ?, ?)',
-            [start_date, end_date, hostel_id]
+            [start_date, end_date, parsedHostelId]
         );
 
         res.json({
-            detail: rows[0],
-            summary: rows[1]
+            detail: rows[0] || [],
+            summary: rows[1] || []
         });
-
     } catch (err) {
-        console.error("REPORT ERROR:", err);
+        console.error('REPORT ERROR:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -111,24 +123,23 @@ router.post('/report', async (req, res) => {
 router.get('/audit', async (req, res) => {
     try {
         const [rows] = await db.execute(`
-            SELECT 
+            SELECT
                 audit_id,
                 table_name,
                 action,
                 record_id,
                 changed_by,
-                DATE_FORMAT(changed_at, '%Y-%m-%d') AS changed_at
+                DATE_FORMAT(changed_at, '%Y-%m-%d %H:%i:%s') AS changed_at
             FROM Audit_Log
-            ORDER BY changed_at DESC
+            ORDER BY changed_at DESC, audit_id DESC
             LIMIT 50
         `);
 
         res.json(rows);
     } catch (err) {
-        console.error("AUDIT ERROR:", err);
+        console.error('AUDIT ERROR:', err);
         res.status(500).json({ error: err.message });
     }
 });
-
 
 module.exports = router;
